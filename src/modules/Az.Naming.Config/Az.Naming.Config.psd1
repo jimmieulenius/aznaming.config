@@ -75,14 +75,22 @@ RequiredModules = @(
 NestedModules = @(
     'Source/Functions/Add-AzResourceCategory.ps1',
     'Source/Functions/ConvertTo-SanitizedCategory.ps1',
-    'Source/Functions/Initialize-AzResourceAbbreviation.ps1'
+    'Source/Functions/Get-AzResourceCategory.ps1',
+    'Source/Functions/Get-AzResourceNameRule.ps1',
+    'Source/Functions/Initialize-AzResourceAbbreviation.ps1',
+    'Source/Functions/Initialize-AzResourceNameRule.ps1',
+    'Source/Functions/Set-AzResourceAbbreviation.ps1',
     'Source/Variables.ps1'
 )
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
     'Add-AzResourceCategory',
-    'Initialize-AzResourceAbbreviation'
+    'Get-AzResourceCategory',
+    'Get-AzResourceNameRule',
+    'Initialize-AzResourceAbbreviation',
+    'Initialize-AzResourceNameRule',
+    'Set-AzResourceAbbreviation'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
