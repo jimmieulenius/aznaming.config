@@ -1,20 +1,24 @@
 function Add-AzResourceCategory {
     param (
+        [Parameter(Mandatory = $true)]
         [String]
         $Category,
 
+        [Parameter(Mandatory = $true)]
         [String]
-        $ResourcePath
+        $Resource
     )
 
     $sanitizedCategory = $Category `
     | ConvertTo-SanitizedCategory
 
-    $resourceByCategoryItem = ${Az.Naming.Config}.ResourceByCategory[$sanitizedCategory] ?? @()
-
-    if ($resourceByCategoryItem -inotcontains $ResourcePath) {
-        $resourceByCategoryItem += $ResourcePath
+    if ($Script:CategoryList -inotcontains $sanitizedCategory) {
+        $Script:CategoryList += $sanitizedCategory
     }
 
-    ${Az.Naming.Config}.ResourceByCategory[$sanitizedCategory] = $resourceByCategoryItem
+    $resourceCategoryItem = ${Az.Naming.Config}.ResourceCategoryLookup[$Resource]
+
+    if (-not $resourceCategoryItem) {
+        ${Az.Naming.Config}.ResourceCategoryLookup[$Resource] = $sanitizedCategory
+    }
 }

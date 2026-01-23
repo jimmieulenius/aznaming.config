@@ -93,15 +93,15 @@ function Initialize-AzResourceAbbreviation {
                 ) {
                     # Use abbreviation as key and full resource path as value
                     $item = @{
-                        abbreviation = $abbreviation
-                        resourcePath = $resourcePath
-                        category = $currentCategory `
+                        Abbreviation = $abbreviation
+                        ResourcePath = $resourcePath
+                        Category = $currentCategory `
                         | ConvertTo-SanitizedCategory
                     }
 
                     $result[$abbreviation] = @{
-                        resourcePath = $item.resourcePath
-                        category = $item.category
+                        ResourcePath = $item.ResourcePath
+                        Category = $item.Category
                     }
 
                     if ($ItemAction) {

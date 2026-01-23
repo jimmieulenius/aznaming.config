@@ -4,13 +4,5 @@ function Get-AzResourceCategory {
         $Resource
     )
 
-    if (-not ${Az.Naming.Config}.ResourceByCategory) {
-        return
-    }
-
-    foreach ($keyValue in ${Az.Naming.Config}.ResourceByCategory.GetEnumerator()) {
-        if ($keyValue.Value -icontains $Resource) {
-            return $keyValue.Key
-        }
-    }
+    return ${Az.Naming.Config}.ResourceCategoryLookup[$Resource]
 }

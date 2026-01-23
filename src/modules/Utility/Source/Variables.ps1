@@ -1,0 +1,2 @@
+Export-ModuleMember `
+    -Variable '*'

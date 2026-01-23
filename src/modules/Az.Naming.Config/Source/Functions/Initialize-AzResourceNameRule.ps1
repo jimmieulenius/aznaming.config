@@ -9,9 +9,9 @@ function Initialize-AzResourceNameRule {
 
     if (
         -not $Force `
-        -and ${Az.Naming.Config}.ResourceNameRule
+        -and ${Az.Naming.Config}.ResourceNameRuleLookup
     ) {
-        return ${Az.Naming.Config}.ResourceNameRule
+        return ${Az.Naming.Config}.ResourceNameRuleLookup
     }
 
     $lines = Save-WebDocument `
@@ -88,14 +88,16 @@ function Initialize-AzResourceNameRule {
                 $item = @{
                     Key = $resourceKey
                     Value = @{
-                        entity = $entity
-                        provider = $currentProvider
-                        scope = $scope
-                        minLength = $minLength
-                        maxLength = $maxLength
-                        description = $validChars
+                        Resource = @{
+                            Entity = $entity
+                            Provider = $currentProvider
+                        }
+                        Scope = $scope
+                        MinLength = $minLength
+                        MaxLength = $maxLength
+                        ValidChars = $validChars
                         #pattern = $pattern
-                        source = "official"
+                        Source = "official"
                     }
                 }
 
@@ -156,7 +158,7 @@ function Initialize-AzResourceNameRule {
     #     }
     # }
 
-    ${Az.Naming.Config}.ResourceNameRule = $result
+    ${Az.Naming.Config}.ResourceNameRuleLookup = $result
 
     return $result
 }
