@@ -1,4 +1,4 @@
-function Get-ObjectPropertyName {
+function Get-IsDictionary {
     param (
         [Parameter(
             Mandatory = $true,
@@ -8,12 +8,7 @@ function Get-ObjectPropertyName {
         $InputObject
     )
 
-    if (
-        $InputObject -is [Hashtable] `
+    return $InputObject -is [Hashtable] `
         -or $InputObject -is [System.Collections.Specialized.IOrderedDictionary] `
-    ) {
-        return $InputObject.Keys
-    }
-
-    return $InputObject.PSObject.Properties.Name
+        -or $InputObject.PSObject.TypeNames -icontains 'System.Management.Automation.PSCustomObject'
 }

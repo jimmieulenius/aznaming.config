@@ -72,17 +72,24 @@ RequiredModules = @(
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 NestedModules = @(
-    'Source/Functions/Get-IsObject.ps1',
-    'Source/Functions/Get-ObjectPropertyName.ps1',
-    'Source/Functions/Merge-Object.ps1',
+    'Source/Functions/Get-DictionaryItem.ps1',
+    'Source/Functions/Get-DictionaryKey.ps1',
+    'Source/Functions/Get-IsDictionary.ps1',
+    'Source/Functions/Get-PathSegment.ps1',
+    'Source/Functions/Invoke-DictionaryItem.ps1',
+    'Source/Functions/Merge-Dictionary.ps1',
+    'Source/Functions/Set-DictionaryItem.ps1',
     'Source/Variables.ps1'
 )
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
-    'Get-IsObject'
-    'Get-ObjectPropertyName',
-    'Merge-Object'
+    'Get-DictionaryItem',
+    'Get-DictionaryKey',    
+    'Get-IsDictionary',
+    'Invoke-DictionaryItem',
+    'Merge-Dictionary',
+    'Set-DictionaryItem'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
