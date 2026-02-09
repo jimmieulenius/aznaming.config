@@ -1,7 +1,7 @@
 function Add-JsonLine {
     param (
         [Parameter(Mandatory = $true)]
-        [String]
+        [string]
         $Path,
 
         [Parameter(Mandatory = $true)]

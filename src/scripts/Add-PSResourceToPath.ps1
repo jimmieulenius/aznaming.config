@@ -1,29 +1,29 @@
 param(
-    [String[]]
+    [string[]]
     $ModulesPath = @(
-        "$PSScriptRoot\..\modules"
+        "$PSScriptRoot/../modules"
     ),
 
     [String[]]
     $ScriptsPath = @(
-        "$PSScriptRoot\..\scripts"
+        "$PSScriptRoot/../scripts"
     )
 )
 
 function Add-ToEnvPath {
     param (
         [Parameter(Mandatory = $true)]
-        [String]
+        [string]
         $Name,
 
         [Parameter(Mandatory = $true)]
-        [String[]]
+        [string[]]
         $Value
     )
 
     $currentValue = (
         Get-Item `
-            -Path "Env:$Name"
+            -Path "env:$Name"
     ).Value
     $pathSeparator = [System.IO.Path]::PathSeparator
 
@@ -37,7 +37,7 @@ function Add-ToEnvPath {
     }
 
     Set-Item `
-        -Path "Env:$Name" `
+        -Path "env:$Name" `
         -Value $currentValue
 }
 

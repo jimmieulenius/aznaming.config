@@ -1,7 +1,7 @@
 function Initialize-AzResourceNameRule {
     param (
         [ScriptBlock]
-        $ItemAction,
+        $Process,
 
         [Switch]
         $Force
@@ -53,8 +53,8 @@ function Initialize-AzResourceNameRule {
             }
             
             # Parse length: "3-24" or "1-100" or "1-50<br><br>..."
-            $minLength = $Script:DefaultMinLength
-            $maxLength = $Script:DefaultMaxLength
+            $minLength = $script:DefaultMinLength
+            $maxLength = $script:DefaultMaxLength
 
             if ($length -match '(\d+)-(\d+)') {
                 $minLength = [int]$matches[1]
@@ -97,13 +97,14 @@ function Initialize-AzResourceNameRule {
                         MaxLength = $maxLength
                         ValidChars = $validChars
                         #pattern = $pattern
-                        Source = "official"
+                        Source = "official docs"
                     }
                 }
 
-                if ($ItemAction) {
-                    $item = & $ItemAction `
-                        -InputObject $item
+                if ($Process) {
+                    $item = $item `
+                    | ForEach-Object `
+                        -Process $Process
                 }
                 
                 if (

@@ -1,7 +1,7 @@
 function Initialize-AzResourceAbbreviation {
     param (
         [ScriptBlock]
-        $ItemAction,
+        $Process,
 
         [Switch]
         $Force
@@ -104,9 +104,10 @@ function Initialize-AzResourceAbbreviation {
                         Category = $item.Category
                     }
 
-                    if ($ItemAction) {
-                        & $ItemAction `
-                            -InputObject $item
+                    if ($Process) {
+                        $item `
+                        | ForEach-Object `
+                            -Process $Process
                     }
                 }
             }

@@ -1,45 +1,44 @@
 function Get-DictionaryItem {
+    [CmdletBinding()]
     param (
         [Parameter(
             Mandatory = $true,
             ValueFromPipeline = $true
         )]
-        [Object]
+        [object]
         $InputObject,
 
-        [String]
-        $Path,
-
-        [Switch]
-        $AsKeyValue
+        [string]
+        $Path
     )
 
     if (
         -not (
-            $InputObject `
-            | Get-IsDictionary
+            Get-IsDictionary `
+                -InputObject $InputObject
         )
     ) {
-        throw "InputObject must be a dictionary."
+        Write-Error `
+            -Message 'InputObject must be a dictionary.'
+
+        return
     }
 
     if ($Path) {
-        $InputObject `
-        | Invoke-DictionaryItem `
+        Invoke-DictionaryItem `
+            -InputObject $InputObject `
             -Path $Path `
             -ScriptBlock {
                 return $_
-            } `
-            -AsKeyValue:$AsKeyValue `
+            }
         | Select-Object `
             -Last 1
     }
     else {
-        $InputObject `
-        | Invoke-DictionaryItem `
+        Invoke-DictionaryItem `
+            -InputObject $InputObject `
             -ScriptBlock {
                 return $_
-            } `
-            -AsKeyValue:$AsKeyValue
+            }
     }
 }

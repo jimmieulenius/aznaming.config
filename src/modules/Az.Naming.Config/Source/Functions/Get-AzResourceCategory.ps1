@@ -1,6 +1,6 @@
 function Get-AzResourceCategory {
     param (
-        [String]
+        [string]
         $Resource
     )
 

@@ -1,7 +1,7 @@
 function Save-WebDocument {
     param (
         [Parameter(Mandatory = $true)]
-        [String]
+        [string]
         $Url,
 
         [Switch]

@@ -1,11 +1,11 @@
 function Set-AzResourceAbbreviation {
     param (
         [Parameter(Mandatory = $true)]
-        [String]
+        [string]
         $Abbreviation,
 
         [Parameter(Mandatory = $true)]
-        [String]
+        [string]
         $ResourcePath
     )
 

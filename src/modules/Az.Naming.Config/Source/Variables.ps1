@@ -1,9 +1,9 @@
-$Script:ResourceAbbreviation = @{}
-$Script:ResourceNameRuleLookup = @{}
-$Script:CategoryList = @()
-$Script:ResourceCategoryLookup = @{}
-$Script:DefaultMinLength = 1
-$Script:DefaultMaxLength = 80
+$script:ResourceAbbreviation = @{}
+$script:ResourceNameRuleLookup = @{}
+$script:CategoryList = @()
+$script:ResourceCategoryLookup = @{}
+$script:DefaultMinLength = 1
+$script:DefaultMaxLength = 80
 
 Export-ModuleMember `
     -Variable '*'

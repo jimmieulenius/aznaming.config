@@ -76,12 +76,15 @@ NestedModules = @(
     'Source/Functions/Add-AzResourceCategory.ps1',
     'Source/Functions/Add-JsonLine.ps1',
     'Source/Functions/ConvertTo-SanitizedCategory.ps1',
-    'Source/Functions/Get-AzProviderResource.ps1',
+    'Source/Functions/Get-AzProviderResourceFromApiSpecs.ps1',
+    'Source/Functions/Get-AzResourceEndpointFromApiSpecs.ps1',
     'Source/Functions/Get-AzResourceCategory.ps1',
     'Source/Functions/Get-AzResourceNameRule.ps1',
+    'Source/Functions/Get-AzResourcePath.ps1',
     'Source/Functions/Initialize-AzResourceAbbreviation.ps1',
     'Source/Functions/Initialize-AzResourceNameRule.ps1',
-    'Source/Functions/Invoke-ApiSpecsAction.ps1',
+    'Source/Functions/Invoke-AzApiSpecsItem.ps1',
+    'Source/Functions/Resolve-AzApiSpecs.ps1',
     'Source/Functions/Set-AzResourceAbbreviation.ps1',
     'Source/Variables.ps1'
 )
@@ -89,13 +92,16 @@ NestedModules = @(
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
     'Add-JsonLine',
-    'Get-AzProviderResource',
+    'Get-AzProviderResourceFromApiSpecs',
+    'Get-AzResourceEndpointFromApiSpecs',
     'Add-AzResourceCategory',
     'Get-AzResourceCategory',
     'Get-AzResourceNameRule',
+    'Get-AzResourcePath',
     'Initialize-AzResourceAbbreviation',
     'Initialize-AzResourceNameRule',
-    'Invoke-ApiSpecsAction',
+    'Invoke-AzApiSpecsItem',
+    'Resolve-AzApiSpecs',
     'Set-AzResourceAbbreviation'
 )
 

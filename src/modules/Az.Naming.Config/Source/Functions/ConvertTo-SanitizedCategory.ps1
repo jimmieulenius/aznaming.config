@@ -3,7 +3,7 @@ function ConvertTo-SanitizedCategory {
         [Parameter(
             Mandatory = $true,
             ValueFromPipeline = $true)]
-        [String]
+        [string]
         $InputObject
     )
 

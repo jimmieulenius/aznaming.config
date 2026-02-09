@@ -1,19 +1,20 @@
 function Set-DictionaryItem {
+    [CmdletBinding()]
     param (
         [Parameter(
             Mandatory = $true,
             ValueFromPipeline = $true
         )]
-        [Object]
+        [object]
         $InputObject,
 
         [Parameter(
             Mandatory = $true
         )]
-        [String]
+        [string]
         $Key,
 
-        [Object]
+        [object]
         $Value,
 
         [Switch]
@@ -21,18 +22,32 @@ function Set-DictionaryItem {
     )
 
     if (
-        $InputObject -is [Hashtable] `
-        -or $InputObject -is [System.Collections.Specialized.IOrderedDictionary] `
+        $InputObject `
+        | Get-IsDictionary `
+            -DictionaryType @(
+                'Hashtable',
+                'Ordered'
+            )
     ) {
         $InputObject[$Key] = $Value
     }
-    else {
+    elseif (
+        $InputObject `
+        | Get-IsDictionary `
+            -DictionaryType 'PSCustomObject'
+    ) {
         $InputObject `
         | Add-Member `
             -MemberType 'NoteProperty' `
             -Name $Key `
             -Value $Value `
             -Force
+    }
+    else {
+        Write-Error `
+            -Message 'InputObject must be a dictionary.'
+
+        return
     }
 
     if ($PassThru) {

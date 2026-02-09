@@ -1,6 +1,6 @@
 function Get-AzResourceNameRule {
     param (
-        [String]
+        [string]
         $Name
     )
 

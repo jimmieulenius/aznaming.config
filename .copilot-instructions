@@ -1,0 +1,125 @@
+# Azure Naming (aznaming) Framework - Config Repository
+
+## Project Vision & Ecosystem
+
+This repository is the **configuration management hub** for the **aznaming framework** - a comprehensive Azure resource naming solution designed to support multiple tools and platforms:
+
+- **Azure CLI** - Cloud shell integration
+- **PowerShell** - Module-based integration
+- **Terraform** - Provider integration
+- **Bicep** - Infrastructure-as-Code templates
+- **Standalone CLI** - Independent command-line tool
+- **Additional tools** - Extensible architecture for future integrations
+
+## Role of This Repository (aznaming.config)
+
+This is the **source of truth** for all aznaming configuration:
+- Azure resource naming rules and conventions
+- Resource abbreviations and conventions
+- Resource categorization and metadata
+- API specifications mapping
+- Validation rules and constraints
+- Configuration maintenance and updates
+
+**Important:** This repository manages and maintains configuration that feeds into the **aznaming .NET C# engine** (the core business logic). The engine is the centralized implementation of naming validation and rule enforcement, which is then consumed by all target platforms.
+
+## Architecture: Separation of Concerns
+
+```
+aznaming.config (this repo)
+    ↓ provides configuration to
+aznaming.engine (.NET C# library)
+    ↑ consumed by
+├── Azure CLI integration
+├── PowerShell module wrapper
+├── Terraform provider
+├── Bicep extension
+├── Standalone CLI (wraps engine)
+└── Future tool integrations
+```
+
+**Key Philosophy:** Logic lives in one place (the .NET engine), reducing duplication and ensuring consistent behavior across all tools. This repo provides the data/configuration that engine consumes.
+
+## Architecture & Design Principles
+
+### Core Module Structure (This PowerShell Repo)
+- **Az.Naming.Config** - Primary module handling configuration creation, maintenance, and data structure management
+- **Az.Docs** - Documentation generation from configurations
+- **DataStructure** - Dictionary and path-based data manipulation utilities
+- **PSModule** - PowerShell module base functionality
+
+### Key Design Considerations
+- **Configuration First** - Focus is on managing and preparing configuration data that the .NET engine will consume
+- **Format Alignment** - Config format must be compatible with the .NET C# engine's input requirements
+- **Platform Agnostic** - Data structures and output should be consumable by non-PowerShell tools
+- **Extensible** - Support for custom resource types and future Azure services
+- **Discoverable** - Leverage Azure API specifications for automatic resource discovery
+- **Validated** - Validate configurations before storage to ensure consistency with engine expectations
+
+## Critical Functions & Their Purpose
+
+### Configuration Management
+- `Initialize-AzResourceNameRule` - Define naming rules for Azure resources
+- `Set-AzResourceAbbreviation` - Manage standard abbreviations
+- `Add-AzResourceCategory` - Organize resources by category
+
+### Data Integration
+- `Resolve-AzApiSpecs` - Fetch and parse Azure API specifications
+- `Get-AzProviderResourceFromApiSpecs` - Extract resource types from API specs
+- `Invoke-AzApiSpecsItem` - Query and process API specification data
+
+### Utilities & Helpers
+- `Merge-Dictionary` - Combine configuration sources
+- `Get-DictionaryItem`/`Set-DictionaryItem` - Safe config access patterns
+- `Add-PathSegment` - Construct config file paths
+
+## Coding Standards
+
+### PowerShell Specific
+- Use `verb-noun` naming convention (Resolve-*, Get-*, Set-*, Initialize-*, etc.)
+- Cmdlet binding and parameter validation for all public functions
+- Proper error handling with `try-catch` and error messages
+- Return objects/hashtables for data, not raw strings
+- Document public functions with comment-based help
+
+### Data Exchange Format
+- Prioritize **platform-agnostic formats** (JSON preferred for broad tool support and .NET compatibility)
+- Structure configs for easy consumption by the .NET engine and downstream tools
+- Ensure serialization is compatible with .NET C# deserialization requirements
+- Avoid PowerShell-specific serialization
+
+### Integration Points
+- Functions should return data structures consumable by external tools
+- Consider how output will be parsed by non-PowerShell consumers
+- Validate against Azure API specifications to ensure accuracy
+
+## Development Status & Evolution
+
+**This project is under active development.** The PowerShell architecture and module structure are not finalized:
+- New functions and modules will be added as features are developed
+- Existing functions may be refactored or reorganized
+- The current structure should support future enhancements
+- Code should be written with modularity and extensibility in mind
+
+When suggesting or implementing code, consider how it will accommodate future growth and changes.
+
+## Important Context
+
+### Data Sources
+- **Azure API Specifications** - Primary source for resource types and their properties
+- **Azure Naming Conventions** - Microsoft's official naming guidelines
+- **Community Standards** - Best practices from Azure community
+
+### Key Dependencies
+- Azure Resource Manager (ARM) knowledge
+- PowerShell module system
+- JSON/configuration parsing
+- REST API integration for Azure specs
+
+### Success Criteria
+- Configuration can be created, maintained, and exported for consumption by the .NET aznaming engine
+- .NET engine can reliably parse and use all configuration data
+- Configuration exports can be consumed by all target platform integrations (CLI, PowerShell, Terraform, Bicep)
+- Configuration stays synchronized with Azure API updates
+- Easy maintenance and updates for new Azure services
+- Clear documentation for all naming conventions
