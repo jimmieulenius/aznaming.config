@@ -39,7 +39,8 @@ If specified, automatically rebuilds the index after each Set-BloomItem operatio
 Default: $false (append-only, manual rebuild)
 
 .PARAMETER Force
-Overwrites existing store registration if it already exists.
+Overwrites existing store registration, data file, index, and Bloom filter if they already exist.
+Use this to create a fresh, empty store.
 
 .EXAMPLE
 # Register with defaults (uses 'key' property)
@@ -56,6 +57,10 @@ Register-BloomStore -Name "resources" -Key "id", "name", { param($obj) "$($obj.c
 .EXAMPLE
 # Register with automatic index rebuilds
 Register-BloomStore -Name "resources" -Key "id" -AutoBuild
+
+.EXAMPLE
+# Force overwrite with fresh empty store (clears old data)
+Register-BloomStore -Name "resources" -Force
 #>
 function Register-BloomStore {
     [CmdletBinding()]
@@ -98,13 +103,33 @@ function Register-BloomStore {
     process {
         try {
             # Check if store already registered
-            if (
-                -not $Force `
-                -and $script:BloomStores.ContainsKey($Name)
-            ) {
-                Write-Error "Store '$Name' is already registered. Use -Force to overwrite."
+            if ($script:BloomStores.ContainsKey($Name)) {
+                if (-not $Force) {
+                    Write-Error "Store '$Name' is already registered. Use -Force to overwrite."
+                    
+                    return
+                }
                 
-                return
+                # Force: clear existing files for a fresh start
+                $existingStore = $script:BloomStores[$Name]
+                
+                # Clear data file
+                if (Test-Path $existingStore.DataFile) {
+                    Clear-Content -Path $existingStore.DataFile -Force
+                    Write-Verbose "Cleared data file: $($existingStore.DataFile)"
+                }
+                
+                # Clear index file
+                if (Test-Path $existingStore.IndexFile) {
+                    Remove-Item -Path $existingStore.IndexFile -Force
+                    Write-Verbose "Removed index file: $($existingStore.IndexFile)"
+                }
+                
+                # Clear Bloom file
+                if (Test-Path $existingStore.BloomFile) {
+                    Remove-Item -Path $existingStore.BloomFile -Force
+                    Write-Verbose "Removed Bloom file: $($existingStore.BloomFile)"
+                }
             }
             
             # Set defaults

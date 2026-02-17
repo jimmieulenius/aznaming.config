@@ -66,7 +66,11 @@ function Initialize-AzResourceNameRule {
             
             # Create rule entry with provider context
             # Use full path like "Microsoft.KeyVault/vaults" as the key for exact matching
-            if ($entity -and $entity.Length -gt 0 -and $currentProvider) {
+            if (
+                $entity `
+                -and $entity.Length -gt 0 `
+                -and $currentProvider
+            ) {
                 # $resourceKey = if ($entity -match '/') {
                 #     # Already has provider prefix or path separator
                 #     $entity
@@ -76,14 +80,17 @@ function Initialize-AzResourceNameRule {
                 #     "$currentProvider/$entity"
                 # }
 
-                $resourceKey = "$currentProvider/$(
-                    (
-                        $entity -split '/' `
-                        | ForEach-Object {
-                            $_.Trim()
-                        }
-                    ) -join '/'
-                )"
+                $entity = $entity -replace '\s*/\s*', '/' # Normalize spaces around slashes
+                $resourceKey = "$currentProvider/$entity"
+
+                # $resourceKey = "$currentProvider/$(
+                #     (
+                #         $entity -split '/' `
+                #         | ForEach-Object {
+                #             $_.Trim()
+                #         }
+                #     ) -join '/'
+                # )"
 
                 $item = @{
                     Key = $resourceKey

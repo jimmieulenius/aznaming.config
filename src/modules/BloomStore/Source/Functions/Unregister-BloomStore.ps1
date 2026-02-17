@@ -4,22 +4,21 @@ Unregisters a Bloom Store and removes it from memory cache.
 
 .DESCRIPTION
 Removes a registered Bloom Store from the module's internal registry.
-Does not delete the data, index, or Bloom filter files by default.
+By default, deletes the data file, index, and Bloom filter files to prevent stale data.
 
 .PARAMETER Name
 The name of the store to unregister
 
-.PARAMETER RemoveFiles
-If specified, also deletes the index and Bloom filter files.
-Data file is never deleted to prevent accidental data loss.
+.PARAMETER KeepFiles
+If specified, keeps all files (data file, index, and Bloom filter) instead of deleting them.
 
 .EXAMPLE
-# Unregister store (keeps files)
+# Unregister store (removes data, index, and Bloom files)
 Unregister-BloomStore -Name "resources"
 
 .EXAMPLE
-# Unregister and clean up index/Bloom files
-Unregister-BloomStore -Name "resources" -RemoveFiles
+# Unregister but keep all files
+Unregister-BloomStore -Name "resources" -KeepFiles
 #>
 function Unregister-BloomStore {
     [CmdletBinding(SupportsShouldProcess = $true)]
@@ -33,7 +32,7 @@ function Unregister-BloomStore {
         $Name,
         
         [switch]
-        $RemoveFiles
+        $KeepFiles
     )
     
     process {
@@ -50,14 +49,25 @@ function Unregister-BloomStore {
                 # Remove from registry
                 $script:BloomStores.Remove($Name)
                 
-                # Optionally remove files
-                if ($RemoveFiles) {
+                # Remove files by default unless KeepFiles is specified
+                if (-not $KeepFiles) {
+                    if (
+                        Test-Path `
+                            -Path $store.DataFile
+                    ) {
+                        Remove-Item `
+                            -Path $store.DataFile `
+                            -Force
+
+                        Write-Verbose "Removed data file: $($store.DataFile)"
+                    }
                     if (
                         Test-Path `
                             -Path $store.IndexFile
                     ) {
                         Remove-Item `
-                            -Path $store.IndexFile -Force
+                            -Path $store.IndexFile `
+                            -Force
 
                         Write-Verbose "Removed index file: $($store.IndexFile)"
                     }
@@ -66,7 +76,8 @@ function Unregister-BloomStore {
                             -Path $store.BloomFile
                     ) {
                         Remove-Item `
-                            -Path $store.BloomFile -Force
+                            -Path $store.BloomFile `
+                            -Force
 
                         Write-Verbose "Removed Bloom file: $($store.BloomFile)"
                     }
@@ -77,7 +88,7 @@ function Unregister-BloomStore {
                 [PSCustomObject]@{
                     Name = $Name
                     Unregistered = $true
-                    FilesRemoved = $RemoveFiles
+                    FilesRemoved = -not $KeepFiles
                 }
             }
         }

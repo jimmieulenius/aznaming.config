@@ -17,7 +17,8 @@ function Get-AzResourcePath {
             $InputObject -split $Provider
         )[1] `
         -replace '\{[^}]*\}', '' `
-        -replace '/+', '/'
+        -replace '/+', '/' `
+        -replace ' ', ''
     ).Trim('/')
 
     return @{

@@ -87,6 +87,7 @@ function Set-BloomItem {
                 else {
                     $item `
                     | ConvertTo-Json `
+                        -Depth 100 `
                         -Compress
                 }
                 

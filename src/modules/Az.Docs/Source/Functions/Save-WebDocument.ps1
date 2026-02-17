@@ -26,7 +26,13 @@ function Save-WebDocument {
             -Leaf
     )"
 
-    if ($Force -or -not (Test-Path $cachePath)) {
+    if (
+        $Force `
+        -or -not (
+            Test-Path `
+                -Path $cachePath
+        )
+    ) {
         Invoke-WebRequest `
             -Uri $Url `
             -OutFile $cachePath `
