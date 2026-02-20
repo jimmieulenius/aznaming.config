@@ -56,6 +56,8 @@ Initialize-AzResourceAbbreviation `
         }
     }
 
+Write-Host "Abbreviations count: $(${Az.Naming.Config}.ResourceAbbreviation.Keys.Count)"
+
 # Get-AzResourceCategory `
 #     -Resource 'Microsoft.RecoveryServices/vaults'
 
@@ -232,6 +234,7 @@ try {
                 # }
 
                 $policyObject = New-AzResourceNamePolicy `
+                    -ResourcePath $_.Key `
                     -MinLength $rule.value.MinLength `
                     -MaxLength $rule.value.MaxLength `
                     -ValidChars $rule.value.ValidChars `
@@ -441,6 +444,8 @@ try {
                 #     -Encoding 'utf8'
             }
         }
+
+    Write-Host "Abbreviations count: $(${Az.Naming.Config}.ResourceAbbreviation.Keys.Count)"
 
     Write-Host "Total Resource Paths: $($global:ResourceCount)"
 

@@ -352,7 +352,7 @@ function New-ConstraintRuleRegistry {
 
         [ordered]@{
             Name    = 'Start_Letter'
-            Pattern = '(?i)^start with\s+(a\s+)?letter'
+            Pattern = '(?i)^start with\s+(a\s+)?letter(?!\s+or)(?!.*end\s+with)'
             Action  = {
                 param($m, $state)
                 # Use lowercase-only if context suggests it, otherwise full alpha
@@ -367,7 +367,7 @@ function New-ConstraintRuleRegistry {
 
         [ordered]@{
             Name    = 'Start_LowercaseLetter'
-            Pattern = '(?i)^start with\s+(a\s+)?lowercase letter'
+            Pattern = '(?i)^start with\s+(a\s+)?lowercase letter(?!\s+or)'
             Action  = {
                 param($m, $state)
                 $state.StartChars = '[a-z]'
@@ -385,7 +385,7 @@ function New-ConstraintRuleRegistry {
 
         [ordered]@{
             Name    = 'Start_Alphanumeric'
-            Pattern = '(?i)^start\s+(with\s+)?(a\s+)?alphanumeric'
+            Pattern = '(?i)^start\s+(with\s+)?(a\s+)?alphanumeric(?!.*end\s+)'
             Action  = {
                 param($m, $state)
                 $hasLowerOnly = $state.AllowedChars -join '' -match '^[^A-Z]*$' -and ($state.AllowedChars -join '' -match 'a-z')
@@ -413,7 +413,7 @@ function New-ConstraintRuleRegistry {
 
         [ordered]@{
             Name    = 'Start_AndEnd_Alphanumeric'
-            Pattern = '(?i)^start and end with\s+alphanumeric'
+            Pattern = '(?i)^start and end with\s+alphanumeric(?!\s+or)'
             Action  = {
                 param($m, $state)
                 $hasLowerOnly = $state.AllowedChars -join '' -match '^[^A-Z]*$' -and ($state.AllowedChars -join '' -match 'a-z')
@@ -541,7 +541,7 @@ function New-ConstraintRuleRegistry {
 
         [ordered]@{
             Name    = 'End_Alphanumeric'
-            Pattern = '(?i)^end with\s+(a\s+)?alphanumeric'
+            Pattern = '(?i)^end with\s+(a\s+)?alphanumeric(?!\s+or)'
             Action  = {
                 param($m, $state)
                 $hasLowerOnly = $state.AllowedChars -join '' -match '^[^A-Z]*$' -and ($state.AllowedChars -join '' -match 'a-z')
@@ -669,7 +669,7 @@ function New-ConstraintRuleRegistry {
 
         [ordered]@{
             Name    = 'Cant_EndPeriod'
-            Pattern = "(?i)can'?t\s+end\s+(with\s+|in\s+)(a\s+)?period"
+            Pattern = "(?i)can'?t\s+end\s+(with\s+|in\s+)(a\s+)?period(?!\s+or)"
             Action  = {
                 param($m, $state)
                 $joined = ($state.AllowedChars | Select-Object -Unique) -join ''

@@ -1,0 +1,130 @@
+All characters
+Alphanumeric, hyphens and a period/dot (`.`) <br><br> Start and end with alphanumeric. <br><br> Note: A period/dot (`.`) must be followed by an alphanumeric character.
+Alphanumeric, hyphens, and a period/dot (`.`) <br><br> Start and end with alphanumeric. <br><br> Note: A period/dot (`.`) must be followed by an alphanumeric character.
+Alphanumeric, hyphens, and Unicode characters that can be mapped to Punycode
+Alphanumeric, hyphens, and Unicode characters that can be mapped to Punycode<br><br>Can't start or end with hyphen.
+Alphanumeric, underscores and hyphens <br><br> Start with alphanumeric.
+Alphanumeric, underscores, and hyphens <br><br> Start with alphanumeric.
+Alphanumerics
+Alphanumerics and hyphens
+Alphanumerics and hyphens <br><br> Start with alphanumeric. <br><br> Volume can't be named `bin` or `default`.
+Alphanumerics and hyphens. <br><br>Start with alphanumeric.<br><br>Underscores aren't supported.
+Alphanumerics and hyphens<br><br>Can't contain a sequence of more than two hyphens.<br><br>Can't start with or end with a hyphen.
+Alphanumerics and hyphens<br><br>Can't end with hyphen.
+Alphanumerics and hyphens<br><br>Can't start or end with hyphen.
+Alphanumerics and hyphens<br><br>Can't start or end with hyphen.<br><br>Can't use underscores.
+Alphanumerics and hyphens<br><br>Can't start with hyphen. Can't use consecutive hyphens.
+Alphanumerics and hyphens<br><br>End with alphanumeric.
+Alphanumerics and hyphens<br><br>Start and end with alphanumeric; can't be all numbers.
+Alphanumerics and hyphens<br><br>Start and end with alphanumeric.
+Alphanumerics and hyphens<br><br>Start and end with alphanumeric. <br><br>Note: A period/dot (.) is not allowed in the profile name.
+Alphanumerics and hyphens<br><br>Start and end with alphanumeric. Consecutive hyphens not allowed.
+Alphanumerics and hyphens<br><br>Start and end with letter or number.
+Alphanumerics and hyphens<br><br>Start with a letter and end with alphanumeric.
+Alphanumerics and hyphens<br><br>Start with a letter.
+Alphanumerics and hyphens<br><br>Start with a letter. Can't end with hyphen.
+Alphanumerics and hyphens<br><br>Start with a letter. End with a letter or number.
+Alphanumerics and hyphens<br><br>Start with a letter. End with a letter or number.<br><br>For more information, see [Create namespace](/rest/api/servicebus/create-namespace).
+Alphanumerics and hyphens<br><br>Start with a letter. End with alphanumeric.
+Alphanumerics and hyphens<br><br>Start with a letter. End with letter or number.
+Alphanumerics and hyphens<br><br>Start with a letter. End with letter or number. Can't contain consecutive hyphens.
+Alphanumerics and hyphens<br><br>Start with alphanumeric.
+Alphanumerics and hyphens<br><br>Start with alphanumeric. <br><br> The following words can't be used on their own as the name: `default`, `requested`, `service`.
+Alphanumerics and hyphens<br><br>To use restricted characters, add a tag named **hidden-title** with the dashboard name you want to use. The portal displays that name when showing the dashboard.
+Alphanumerics and periods<br><br>Start and end with alphanumeric.
+Alphanumerics and underscores<br><br>Start with a letter.
+Alphanumerics, hyphens, and periods<br><br>Start and end with alphanumeric.
+Alphanumerics, hyphens, and underscores
+Alphanumerics, hyphens, and underscores<br><br>Start with a letter or number.
+Alphanumerics, hyphens, periods, and underscores
+Alphanumerics, hyphens, periods, and underscores<br><br>Start with a letter and end with alphanumeric.
+Alphanumerics, hyphens, periods, and underscores<br><br>Start with alphanumeric.
+Alphanumerics, hyphens, spaces, and periods
+Alphanumerics, hyphens, underscores, and periods
+Alphanumerics, hyphens, underscores, periods, and parentheses
+Alphanumerics, hyphens, underscores, periods, and parentheses <br><br> Start with a letter or number.<br><br>Can't end with period.
+Alphanumerics, periods, hyphens, and underscores<br><br>Start alphanumeric.
+Alphanumerics, periods, hyphens, and underscores<br><br>Start and end with alphanumeric.
+Alphanumerics, periods, hyphens, and underscores<br><br>Start and end with alphnumeric.
+Alphanumerics, periods, hyphens, and underscores<br><br>Start and end with letter or number.
+Alphanumerics, periods, hyphens, and underscores<br><br>Start with alphanumeric and end with alphanumeric or underscore.
+Alphanumerics, periods, hyphens, underscores, and slashes<br><br>Start and end with alphanumeric.
+Alphanumerics, periods, underscores, hyphens, and parentheses<br><br>Can't end in period.
+Alphanumerics, spaces, periods, hyphens, and underscores<br><br>Can't end with period or space.
+Alphanumerics, underscores, and hyphens
+Alphanumerics, underscores, and hyphens <br><br> Start with alphanumeric.
+Alphanumerics, underscores, and hyphens<br><br>Start and end with alphanumeric or underscore.
+Alphanumerics, underscores, and hyphens<br><br>Start and end with alphanumeric.
+Alphanumerics, underscores, and hyphens<br><br>Start and end with alphanumeric.<br><br> Only predefined values are valid.
+Alphanumerics, underscores, and hyphens<br><br>Start with a letter.
+Alphanumerics, underscores, and hyphens<br><br>Start with alphanumeric.
+Alphanumerics, underscores, and periods<br><br>Start and end with alphanumeric.
+Alphanumerics, underscores, hyphens, and parentheses
+Alphanumerics, underscores, hyphens, and periods<br><br>Start and end with alphanumeric.
+Alphanumerics, underscores, parentheses, hyphens, and periods
+Alphanumerics, underscores, periods, and hyphens <br><br> Start with alphanumeric.
+Alphanumerics, underscores, periods, and hyphens<br><br>Start with a letter or number. End with letter, number, or underscore.
+Alphanumerics, underscores, periods, and hyphens<br><br>Start with alphanumeric; end alphanumeric or underscore.
+Alphanumerics, underscores, periods, and hyphens<br><br>Start with alphanumeric.
+Alphanumerics, underscores, periods, and hyphens<br><br>Start with alphanumeric. End with alphanumeric or underscore.
+Alphanumerics<br><br>Start with a letter.
+Any URL characters and case sensitive
+Can't contain `<>*%&:\/?@-` or control characters <br><br>Can't end with `.` or space. <br><br>Can't contain [reserved words](../troubleshooting/error-reserved-resource-name.md).
+Can't use spaces, control characters, or these characters:<br> `~ ! @ # $ % ^ & * ( ) = + _ [ ] { } \ | ; : . ' " , < > / ?`<br><br>Can't start with underscore. Can't end with period or hyphen.
+Can't use spaces, control characters, or these characters:<br> `~ ! @ # $ % ^ & * ( ) = + _ [ ] { } \ | ; : . ' " , < > / ?`<br><br>Windows virtual machines can't include periods or end with hyphens.<br><br>Linux virtual machines can't end with periods or hyphens.
+Can't use:<br> `'<>%&:\?/#` or control characters
+Can't use:<br> `<>*%&:\?.+/` or control characters <br><br>Can't end with space.
+Can't use:<br>`:<>+/&%\?|` or control characters <br><br>Can't end with space or period.
+Can't use:<br>`'<>%&:\?/#` or control characters
+Can't use:<br>`*#&+:<>?@%{}\/|` or control characters <br><br>Can't end with space or period.
+Can't use:<br>`*<>%{}&:\\?/#|` or control characters <br><br>Can't end with space or period.
+Can't use:<br>`/` <br><br>Can't end with a space or period.
+Can't use:<br>`%&\?/` or control characters <br><br>Can't end with space or period.
+Can't use:<br>`%&\\?/` or control characters<br><br>Can't end with period or space.
+Can't use:<br>`<>*&@:?+/\,;=.|[]"` or space<br><br>Can't start with underscore, hyphen, or number. Can't end with underscore or hyphen.
+Can't use:<br>`<>*#.%&:\\+?/-` or control characters<br><br>Start with alphanumeric.
+Can't use:<br>`<>*#.%&:\\+?/` or control characters<br><br>Start with alphanumeric.
+Can't use:<br>`<>*%{}&:\\?+/#|` or control characters <br><br>Can't end with space or period.
+Can't use:<br>`<>*%&:;\/?` or control characters<br><br>Can't end with period.
+Can't use:<br>`<>*%&:?+/\\` or control characters<br><br>Can't end with a space.
+Can't use:<br>`<>*%&:\/?` or control characters<br><br>Can't end with period or space.
+Can't use:<br>`<>%&\?/` or control characters
+Datastore name consists only of lowercase letters, digits, and underscores.
+Display name can contain any characters.<br><br>Resource name can't use:<br>`#<>%&:\?/` or control characters. <br><br>Can't end with period or space.
+Each label can contain alphanumerics, underscores, and hyphens.<br><br>Each label is separated by a period.
+For solutions authored by Microsoft, the name must be in the pattern:<br>`SolutionType(WorkspaceName)`<br><br>For solutions authored by third parties, the name must be in the pattern:<br>`SolutionType[WorkspaceName]`<br><br>For example, a valid name is:<br>`AntiMalware(contoso-IT)`<br><br>The solution type is case-sensitive.
+Letters and numbers<br><br>Start with a letter. End with letter or number.<br><br>Can't contain [reserved words](../troubleshooting/error-reserved-resource-name.md).
+Lowercase letters and numbers
+Lowercase letters and numbers<br><br>Can't start with a number.
+Lowercase letters and numbers<br><br>Start with a letter.
+Lowercase letters and numbers<br><br>Start with a lowercase letter.
+Lowercase letters and numbers<br><br>Start with lowercase letter.
+Lowercase letters or numbers<br><br>Start with lowercase letter.
+Lowercase letters, hyphens, and numbers<br><br>Can't start or end with hyphen.
+Lowercase letters, hyphens, and numbers<br><br>Can't start or end with hyphens.
+Lowercase letters, hyphens, and numbers<br><br>Start and end with letter or number.<br><br>Can't contain `-ondemand`.
+Lowercase letters, numbers, and hyphens
+Lowercase letters, numbers, and hyphens<br><br> Can't start or end with hyphen.
+Lowercase letters, numbers, and hyphens<br><br>Can't start or end with hyphen.
+Lowercase letters, numbers, and hyphens<br><br>Can't start or end with hyphen. Can't use consecutive hyphens.
+Lowercase letters, numbers, and hyphens<br><br>Can't start or end with hyphen. Consecutive hyphens aren't allowed.
+Lowercase letters, numbers, and hyphens<br><br>Can't start or end with hyphens. Can't use consecutive hyphens.
+Lowercase letters, numbers, and hyphens<br><br>Start with lowercase letter or number.
+Lowercase letters, numbers, and hyphens<br><br>Start with lowercase letter or number. Can't use consecutive hyphens.
+Lowercase letters, numbers, and hyphens<br><br>Start with lowercase letter or number.<br><br>Must begin and end with a letter or number.<br><br>Each hyphen must be preceded and followed by an alphanumeric character.
+Lowercase letters, numbers, and hyphens<br><br>Start with lowercase letter. End with lowercase letter or number.
+Lowercase letters, numbers, hyphens, and underscores<br><br>Start with lowercase letter or number.<br><br>Must begin and end with a letter or number.<br><br>Each hyphen and underscore must be preceded and followed by an alphanumeric character.
+Must be `ActiveDirectory`.
+Must be `current`
+Must be `Default`
+Must be `default`.
+Must be a globally unique identifier (GUID).
+Must be in format:<br>`VaultName_KeyName_KeyVersion`.
+nLowercase letters, numbers, and hyphens<br><br>Start with a letter and end with alphanumeric.
+Numbers and periods<br/>(Each segment is converted to an int32. So each segment has a max value of 2,147,483,647.)
+Numbers and periods<br/>Each segment is converted to an int32, so each segment has a max value of 2,147,483,647.
+Only alphanumerics are valid.
+Should always be **$default**.
+Underscores, hyphens, periods, parentheses, and letters or digits as defined by the [`Char.IsLetterOrDigit`](/dotnet/api/system.char.isletterordigit) function<br><br>Valid characters are members of the following categories in [UnicodeCategory](/dotnet/api/system.globalization.unicodecategory):<br>**UppercaseLetter**,<br>**LowercaseLetter**,<br>**TitlecaseLetter**,<br>**ModifierLetter**,<br>**OtherLetter**,<br>**DecimalDigitNumber**.<br><br>Can't end with period.
+Use one of:<br>`custom`<br>`effective`
+Use one of:<br>`MCAS`<br>`Sentinel`<br>`WDATP`<br>`WDATP_EXCLUDE_LINUX_PUBLIC_PREVIEW`

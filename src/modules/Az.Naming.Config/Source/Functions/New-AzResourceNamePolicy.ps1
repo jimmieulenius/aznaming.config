@@ -24,6 +24,10 @@ function New-AzResourceNamePolicy {
     #>
     [CmdletBinding()]
     param (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $ResourcePath,
+
         [int]
         $MinLength,
 
@@ -105,7 +109,14 @@ function New-AzResourceNamePolicy {
         metadata = $metadata
         constraints = $constraints
         defaults = @{
-            RESOURCE_TYPE = $Abbreviation
+            RESOURCE_TYPE = if ($Abbreviation) {
+                $Abbreviation
+            }
+            else {
+                New-AzResourceAbbreviation `
+                    -ResourcePath $ResourcePath `
+                    -AsTodo
+            }
         }
     }.GetEnumerator() `
     | ForEach-Object {

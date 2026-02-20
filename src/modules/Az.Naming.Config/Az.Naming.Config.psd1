@@ -85,6 +85,7 @@ NestedModules = @(
     'Source/Functions/Initialize-AzResourceAbbreviation.ps1',
     'Source/Functions/Initialize-AzResourceNameRule.ps1',
     'Source/Functions/Invoke-AzApiSpecsItem.ps1',
+    'Source/Functions/New-AzResourceAbbreviation.ps1',
     'Source/Functions/New-AzResourceNamePolicy.ps1',
     'Source/Functions/Resolve-AzApiSpecs.ps1',
     'Source/Functions/Set-AzResourceAbbreviation.ps1',
