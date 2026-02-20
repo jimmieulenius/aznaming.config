@@ -1,7 +1,16 @@
+param (
+    [string]
+    $ApiSpecsPath = 'C:\Users\admin\Source\Repos\azure-rest-api-specs',
+
+    [string]
+    $GroupBy
+)
+
 & "$PSScriptRoot/Add-PSResourceToPath.ps1"
 
 Import-Module `
     -Name @(
+        'Az.Docs',
         'Az.Naming.Config',
         'BloomStore',
         'DataStructure',
@@ -27,17 +36,17 @@ Import-Module `
 
 Initialize-AzResourceAbbreviation `
     -Process {
-        Add-AzResourceCategory `
-            -Category $_.Category `
-            -Resource $_.ResourcePath
+        # Add-AzResourceCategory `
+        #     -Category $_.Category `
+        #     -Resource $_.ResourcePath
 
-        Add-AzResourceCategory `
-            -Category $_.Category `
-            -Resource (
-                $_.ResourcePath `
-                | Split-AzResourcePath `
-                    -Provider
-            )
+        # Add-AzResourceCategory `
+        #     -Category $_.Category `
+        #     -Resource (
+        #         $_.ResourcePath `
+        #         | Split-AzResourcePath `
+        #             -Provider
+        #     )
 
         ${Az.Naming.Config}.ResourceNameRuleLookup[$_.ResourcePath] = @{
             Resource = @{
@@ -61,8 +70,9 @@ try {
         -PassThru
 
     # In-memory dictionaries to track keys by type
-    $policiesKeys = @()
     $endpointsKeys = @()
+
+    $validCharsList = @()
 
     Initialize-AzResourceNameRule `
         -Process {
@@ -73,6 +83,10 @@ try {
                 -Source $nameRule `
                 -Path 'Value' `
             | Out-Null
+
+            if ($_.Value.ValidChars) {
+                $validCharsList += $_.Value.ValidChars
+            }
 
             # Store in Bloom Store
             @{
@@ -85,9 +99,29 @@ try {
             $global:ResourceCount++
 
             # Track key for policies
-            $policiesKeys += $_.Key
+            # $policiesKeys += $_.Key
         } `
         -Force
+
+    Build-BloomStoreIndex `
+        -StoreName $ruleStore.Name `
+    | Out-Null
+
+    New-Item `
+        -Path "$PSScriptRoot/../../config/validChars.txt" `
+        -ItemType 'File' `
+        -Force `
+    | Out-Null
+
+    $validCharsList `
+    | Sort-Object `
+        -Unique `
+    | ForEach-Object {
+        Add-Content `
+            -Path "$PSScriptRoot/../../config/validChars.txt" `
+            -Value $_
+    }
+
 
     # Get-AzResourceNameRule `
     #     -Name 'Microsoft.EventGrid/domains'
@@ -120,18 +154,40 @@ try {
 #         -Depth 100
 # }
 
-    $apiSpecsPath = 'C:\Users\admin\Source\Repos\azure-rest-api-specs'
-
     # $global:Endpoint = @{}
     $endpointStore = Register-BloomStore `
         -Name 'Endpoint' `
         -Key 'key' `
         -PassThru
 
+    $providerConfigObject = [ordered]@{}
+    $resourceConfigObject = [ordered]@{}
+    $lastProvider = $null
+
+    # Output directory
+    $outputDir = "$PSScriptRoot/../../config"
+
+    if (-not (Test-Path $outputDir)) {
+        New-Item `
+            -Path $outputDir `
+            -ItemType 'Directory' `
+            -Force `
+        | Out-Null
+    }
+
     Invoke-AzApiSpecsItem `
-        -Path $apiSpecsPath `
+        -Path $ApiSpecsPath `
         -ScriptBlock {
             $item = $_
+
+            if ($lastProvider -ne $item.Provider) {
+                Write-Host "Processing provider: $($item.Provider)"
+
+                # Save current config object before moving to next provider
+
+                $lastProvider = $item.Provider
+                $providerConfigObject = [ordered]@{}
+            }
 
             $specsObject = Get-Content `
                 -Path $item.Path `
@@ -164,53 +220,136 @@ try {
                 Write-Host "Resource Path: $($_.Key)"
 
                 $currentResourcePath += $_.Key
+                $rule = Get-BloomItem `
+                    -StoreName $ruleStore.Name `
+                    -Key $_.Key
+                $resourceConfigObject = [ordered]@{}
+                # $policyObject = [ordered]@{
+                #     MinLength = $null
+                #     MaxLength = $null
+                #     ValidChars = $null
+                #     Source = "official api specs"
+                # }
 
-                if (
-                    -not (
-                        Get-AzResourceNameRule `
-                            -Name $_.Key
+                $policyObject = New-AzResourceNamePolicy `
+                    -MinLength $rule.value.MinLength `
+                    -MaxLength $rule.value.MaxLength `
+                    -ValidChars $rule.value.ValidChars `
+                    -Abbreviation $rule.value.Resource.Abbreviation `
+                    -Source (
+                        $rule.value.Source `
+                            ? @{
+                                type = $rule.value.Source
+                                url = ${Az.Docs}.ResourceNameRulesUrl
+                            } `
+                            : @{
+                                type = "official api specs"
+                                filePath = [System.IO.Path]::GetRelativePath($ApiSpecsPath, $item.Path) -replace '\\', '/'
+                            }
                     )
-                ) {
-                    if ($policiesKeys -contains $_.Key) {
-                        Write-Verbose "Resource path already has a naming rule, skipping: $($_.Key)"
 
-                        return
-                    }
+                # if ($rule) {
+                #     Merge-Dictionary `
+                #         -InputObject $policyObject `
+                #         -Source (
+                #             [ordered]@{
+                #                 MinLength = $rule.value.MinLength
+                #                 MaxLength = $rule.value.MaxLength
+                #                 ValidChars = $rule.value.ValidChars
+                #                 Source = $rule.value.Source
+                #             }
+                #         ) `
+                #     | Out-Null
 
-                    $resourcePath = $_.Key `
-                    | Get-AzResourcePath `
-                        -Provider $item.Provider
+                #     # $policyObject = $rule.value
 
-                    $category = Get-AzResourceCategory `
-                        -Resource $item.Provider `
-                        -ErrorAction 'SilentlyContinue'
+                #     # $configObject `
+                #     # | Merge-Dictionary `
+                #     #     -Source @{
+                #     #         $_.Key = $rule.value
+                #     #     } `
+                #     #     -Path "['policies']"
+                #     # | Out-Null
+                # }
+                # else {
+                #     $resourcePath = $_.Key `
+                #     | Get-AzResourcePath `
+                #         -Provider $item.Provider
 
-                    $newResourceConfig = @{
-                        Resource = @{
-                            Abbreviation = "<TODO:>"
-                            Entity = $resourcePath.Entity
-                            Provider = $item.Provider
-                        }
-                        Category = if ($category) {
-                            $category
-                        }
-                        else {
-                            'other'
-                        }
-                        Source = "official api specs"
-                    }
+                #     $policyObject = @{
+                #         Resource = @{
+                #             Abbreviation = "<TODO:>"
+                #             Entity = $resourcePath.Entity
+                #             Provider = $item.Provider
+                #         }
+                #         Category = if ($category) {
+                #             $category
+                #         }
+                #         else {
+                #             'other'
+                #         }
+                #         Source = "official api specs"
+                #     }
+                # }
 
-                    # Store in Bloom Store
-                    @{
-                        key = $_.Key
-                        value = $newResourceConfig
-                    } `
-                    | Set-BloomItem `
-                        -StoreName $ruleStore.Name
+                Merge-Dictionary `
+                    -InputObject $resourceConfigObject `
+                    -Source $policyObject `
+                    -Path "['policy']" `
+                | Out-Null
 
-                    # Track key for policies
-                    $policiesKeys += $_.Key
-                }
+                Merge-Dictionary `
+                    -InputObject $providerConfigObject `
+                    -Source $resourceConfigObject `
+                    -Path "['$($_.Key)']"
+                | Out-Null
+
+                # if (
+                #     -not (
+                #         Get-AzResourceNameRule `
+                #             -Name $_.Key
+                #     )
+                # ) {
+                #     if ($policiesKeys -contains $_.Key) {
+                #         Write-Verbose "Resource path already has a naming rule, skipping: $($_.Key)"
+
+                #         return
+                #     }
+
+                #     $resourcePath = $_.Key `
+                #     | Get-AzResourcePath `
+                #         -Provider $item.Provider
+
+                #     $category = Get-AzResourceCategory `
+                #         -Resource $item.Provider `
+                #         -ErrorAction 'SilentlyContinue'
+
+                #     $newResourceConfig = @{
+                #         Resource = @{
+                #             Abbreviation = "<TODO:>"
+                #             Entity = $resourcePath.Entity
+                #             Provider = $item.Provider
+                #         }
+                #         Category = if ($category) {
+                #             $category
+                #         }
+                #         else {
+                #             'other'
+                #         }
+                #         Source = "official api specs"
+                #     }
+
+                #     # Store in Bloom Store
+                #     # @{
+                #     #     key = $_.Key
+                #     #     value = $newResourceConfig
+                #     # } `
+                #     # | Set-BloomItem `
+                #     #     -StoreName $ruleStore.Name
+
+                #     # Track key for policies
+                #     $policiesKeys += $_.Key
+                # }
 
                 $global:ResourceCount++
             }
@@ -261,48 +400,91 @@ try {
             # }
 
             Write-Host ''
+
+            if ($providerConfigObject.Keys.Count) {
+                # $filePath = "$outputDir/$($item.Provider).json"
+
+                $providerConfigObject.Keys `
+                | Sort-Object `
+                | Write-EachToJson `
+                    -Path "$outputDir/$($item.Provider).json" `
+                    -Utf8JsonWriter `
+                    -Begin {
+                        $_.Writer.WriteStartObject()
+                    } `
+                    -Process {
+                        $key = $_.Item
+                        $item = $providerConfigObject.$key
+
+                        Write-JsonItem `
+                            -Utf8JsonWriter $_.Writer `
+                            -Key $key `
+                            -Value $item
+                    } `
+                    -End {
+                        $_.Writer.WriteEndObject()
+                    }
+
+                # New-Item `
+                #     -Path $filePath `
+                #     -ItemType 'File' `
+                #     -Force `
+                # | Out-Null
+
+                # Set-Content `
+                #     -Path $filePath `
+                #     -Value (
+                #         $providerConfigObject `
+                #         | ConvertTo-Json `
+                #             -Depth 100
+                #     ) `
+                #     -Encoding 'utf8'
+            }
         }
 
     Write-Host "Total Resource Paths: $($global:ResourceCount)"
 
-    # Build Bloom Store indices for fast lookups
-    # Build-BloomStoreIndex -StoreName $ruleStore.Name | Out-Null
-    # Build-BloomStoreIndex -StoreName $endpointStore.Name | Out-Null
-    Compress-BloomStoreIndex -StoreName $ruleStore.Name | Out-Null
-    Compress-BloomStoreIndex -StoreName $endpointStore.Name | Out-Null
+    # exit
 
-    # Output directory
-    $outputDir = "$PSScriptRoot/../../config"
+    # # Build Bloom Store indices for fast lookups
+    # Build-BloomStoreIndex `
+    #     -StoreName $ruleStore.Name `
+    # | Out-Null
+    # Build-BloomStoreIndex `
+    #     -StoreName $endpointStore.Name `
+    # | Out-Null
+    # # Compress-BloomStoreIndex -StoreName $ruleStore.Name | Out-Null
+    # # Compress-BloomStoreIndex -StoreName $endpointStore.Name | Out-Null
 
-    if (-not (Test-Path $outputDir)) {
-        New-Item -Path $outputDir -ItemType Directory -Force | Out-Null
-    }
+    # $policiesKeys `
+    # | Sort-Object `
+    # | Write-EachToJson `
+    #     -Path "$outputDir/policies.json" `
+    #     -Utf8JsonWriter `
+    #     -ProcessWriterFactory {
+            
+    #     } `
+    #     -Begin {
+    #         $_.Writer.WriteStartObject()
+    #         $_.Writer.WritePropertyName('policies')
+    #         $_.Writer.WriteStartObject()
+    #     } `
+    #     -Process {
+    #         $key = $_.Item
+    #         $item = Get-BloomItem `
+    #             -StoreName $ruleStore.Name `
+    #             -Key $key
 
-    $policiesKeys `
-    | Sort-Object `
-    | Write-EachToJson `
-        -Path "$outputDir/policies.json" `
-        -Utf8JsonWriter `
-        -Begin {
-            $_.Writer.WriteStartObject()
-            $_.Writer.WritePropertyName('policies')
-            $_.Writer.WriteStartObject()
-        } `
-        -Process {
-            $key = $_.Item
-            $item = Get-BloomItem `
-                -StoreName $ruleStore.Name `
-                -Key $key
+    #         $_.Writer.WritePropertyName($key)
 
-            $_.Writer.WritePropertyName($key)
-
-            Write-JsonItem -Utf8JsonWriter $_.Writer -Value $item.value
-        } `
-        -End {
-            $_.Writer.WriteEndObject()
-            $_.Writer.WriteEndObject()
-        } `
-        -Indented
+    #         Write-JsonItem `
+    #             -Utf8JsonWriter $_.Writer `
+    #             -Value $item.value
+    #     } `
+    #     -End {
+    #         $_.Writer.WriteEndObject()
+    #         $_.Writer.WriteEndObject()
+    #     }
 
     # Build JSON files from stores
     # Write-ToJsonFromStore `

@@ -75,6 +75,7 @@ RequiredModules = @(
 NestedModules = @(
     'Source/Functions/Add-AzResourceCategory.ps1',
     'Source/Functions/Add-JsonLine.ps1',
+    'Source/Functions/Convert-ConstraintToRegex.ps1',
     'Source/Functions/ConvertTo-SanitizedCategory.ps1',
     'Source/Functions/Get-AzProviderResourceFromApiSpecs.ps1',
     'Source/Functions/Get-AzResourceEndpointFromApiSpecs.ps1',
@@ -84,6 +85,7 @@ NestedModules = @(
     'Source/Functions/Initialize-AzResourceAbbreviation.ps1',
     'Source/Functions/Initialize-AzResourceNameRule.ps1',
     'Source/Functions/Invoke-AzApiSpecsItem.ps1',
+    'Source/Functions/New-AzResourceNamePolicy.ps1',
     'Source/Functions/Resolve-AzApiSpecs.ps1',
     'Source/Functions/Set-AzResourceAbbreviation.ps1',
     'Source/Functions/Split-AzResourcePath.ps1',
@@ -102,6 +104,7 @@ FunctionsToExport = @(
     'Initialize-AzResourceAbbreviation',
     'Initialize-AzResourceNameRule',
     'Invoke-AzApiSpecsItem',
+    'New-AzResourceNamePolicy',
     'Resolve-AzApiSpecs',
     'Set-AzResourceAbbreviation',
     'Split-AzResourcePath'

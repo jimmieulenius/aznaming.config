@@ -1,7 +1,7 @@
 function Get-IsDictionary {
     param (
         [Parameter(
-            Mandatory = $true,
+            # Mandatory = $true,
             ValueFromPipeline = $true
         )]
         [object]
@@ -19,6 +19,10 @@ function Get-IsDictionary {
             'PSCustomObject'
         )
     )
+
+    if (-not $InputObject) {
+        return $false
+    }
 
     foreach ($dictionaryTypeItem in $DictionaryType) {
         switch ($dictionaryTypeItem) {

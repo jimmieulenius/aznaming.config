@@ -96,7 +96,7 @@ function Merge-Dictionary {
                         }
                     }
                     default {
-                        $value ??= [Ordered]@{}
+                        $value ??= [ordered]@{}
                     }
                 }
 

@@ -109,29 +109,8 @@ function Register-BloomStore {
                     
                     return
                 }
-                
-                # Force: clear existing files for a fresh start
-                $existingStore = $script:BloomStores[$Name]
-                
-                # Clear data file
-                if (Test-Path $existingStore.DataFile) {
-                    Clear-Content -Path $existingStore.DataFile -Force
-                    Write-Verbose "Cleared data file: $($existingStore.DataFile)"
-                }
-                
-                # Clear index file
-                if (Test-Path $existingStore.IndexFile) {
-                    Remove-Item -Path $existingStore.IndexFile -Force
-                    Write-Verbose "Removed index file: $($existingStore.IndexFile)"
-                }
-                
-                # Clear Bloom file
-                if (Test-Path $existingStore.BloomFile) {
-                    Remove-Item -Path $existingStore.BloomFile -Force
-                    Write-Verbose "Removed Bloom file: $($existingStore.BloomFile)"
-                }
             }
-            
+
             # Set defaults
             if (-not $StoreDirectory) {
                 $StoreDirectory = "$($env:TEMP)/BloomStore"
@@ -140,6 +119,22 @@ function Register-BloomStore {
             
             if (-not $DataFile) {
                 $DataFile = Join-Path $StoreDirectory "$Name.jsonl"
+            }
+
+            $indexFile = Join-Path $StoreDirectory "$Name.index.clixml"
+            $bloomFile = Join-Path $StoreDirectory "$Name.bloom.bin"
+
+            if ($Force) {
+                # Remove existing store files if they exist
+                foreach ($file in @(
+                    $DataFile,
+                    $indexFile,
+                    $bloomFile
+                )) {
+                    if (Test-Path $file) {
+                        Remove-Item -Path $file -Force
+                    }
+                }
             }
             
             # Ensure directories exist
@@ -186,8 +181,8 @@ function Register-BloomStore {
                 Name = $Name
                 DataFile = $DataFile
                 StoreDirectory = $StoreDirectory
-                IndexFile = Join-Path $StoreDirectory "$Name.index.clixml"
-                BloomFile = Join-Path $StoreDirectory "$Name.bloom.bin"
+                IndexFile = $indexFile
+                BloomFile = $bloomFile
                 KeyExtractors = $resolvedKeyExtractors
                 Bloom = $null
                 Index = $null
@@ -200,9 +195,7 @@ function Register-BloomStore {
             if (
                 -not (
                     Test-Path `
-                        -Path (
-                            Join-Path $StoreDirectory "$Name.bloom.bin"
-                        )
+                        -Path $bloomFile
                 )
             ) {
                 $emptyBloom = [BloomFilter]::new(100, 0.01)
@@ -210,13 +203,13 @@ function Register-BloomStore {
                 if ($PSVersionTable.PSVersion.Major -ge 6) {
                     $emptyBloom.bitArray `
                     | Set-Content `
-                        -Path (Join-Path $StoreDirectory "$Name.bloom.bin") `
+                        -Path $bloomFile `
                         -AsByteStream
                 }
                 else {
                     [byte[]]$emptyBloom.bitArray `
                     | Set-Content `
-                        -Path (Join-Path $StoreDirectory "$Name.bloom.bin") `
+                        -Path $bloomFile `
                         -Encoding Byte `
                         -ReadCount 0
                 }
@@ -226,14 +219,12 @@ function Register-BloomStore {
             if (
                 -not (
                     Test-Path `
-                        -Path (
-                            Join-Path $StoreDirectory "$Name.index.clixml"
-                        )
+                        -Path $indexFile
                 )
             ) {
                 @{} `
                 | Export-Clixml `
-                    -Path (Join-Path $StoreDirectory "$Name.index.clixml")
+                    -Path $indexFile
             }
             
             Write-Verbose "Registered store: $Name (Keys: $($resolvedKeyExtractors.Count), AutoBuild: $AutoBuild)"

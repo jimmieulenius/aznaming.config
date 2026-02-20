@@ -23,12 +23,20 @@ function Write-JsonItem {
         [System.Text.Json.Utf8JsonWriter]
         $Utf8JsonWriter,
 
+        [string]
+        $Key = $null,
+
+        [object]
         $Value = $null
     )
 
     switch ($PSCmdlet.ParameterSetName) {
         ('Utf8JsonWriter') {
             $Writer = $Utf8JsonWriter
+
+            if ($Key) {
+                $Writer.WritePropertyName($Key)
+            }
 
             if ($null -eq $Value) {
                 $Writer.WriteNullValue()
