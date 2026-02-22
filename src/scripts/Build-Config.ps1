@@ -1,22 +1,31 @@
 param (
     [string]
-    $ApiSpecsPath = 'C:\Users\admin\Source\Repos\azure-rest-api-specs',
-
-    [string]
-    $GroupBy
+    $ApiSpecsPath = 'C:\Users\admin\Source\Repos\azure-rest-api-specs'
 )
 
 & "$PSScriptRoot/Add-PSResourceToPath.ps1"
 
 Import-Module `
     -Name @(
-        'Az.Docs',
-        'Az.Naming.Config',
-        'BloomStore',
-        'DataStructure',
-        'Json'
+        'Az.Naming.Config'
     ) `
     -Force
+
+Build-AzResourceNameConfig `
+    -ApiSpecsPath $ApiSpecsPath `
+    -Destination "$PSScriptRoot/../../config"
+
+exit
+
+# Import-Module `
+#     -Name @(
+#         'Az.Docs',
+#         'Az.Naming.Config',
+#         'BloomStore',
+#         'DataStructure',
+#         'Json'
+#     ) `
+#     -Force
 
 # @(
 #     @{
@@ -56,8 +65,6 @@ Initialize-AzResourceAbbreviation `
         }
     }
 
-Write-Host "Abbreviations count: $(${Az.Naming.Config}.ResourceAbbreviation.Keys.Count)"
-
 # Get-AzResourceCategory `
 #     -Resource 'Microsoft.RecoveryServices/vaults'
 
@@ -72,7 +79,7 @@ try {
         -PassThru
 
     # In-memory dictionaries to track keys by type
-    $endpointsKeys = @()
+    # $endpointsKeys = @()
 
     $validCharsList = @()
 
@@ -163,7 +170,7 @@ try {
         -PassThru
 
     $providerConfigObject = [ordered]@{}
-    $resourceConfigObject = [ordered]@{}
+    # $resourceConfigObject = [ordered]@{}
     $lastProvider = $null
 
     # Output directory
@@ -217,15 +224,14 @@ try {
             Get-AzProviderResourceFromApiSpecs `
                 -SpecsObject $specsObject `
                 -Provider $item.Provider `
-                -AsKeyValue `
             | ForEach-Object {
-                Write-Host "Resource Path: $($_.Key)"
+                Write-Host "Resource Path: $($_.Identifier)"
 
-                $currentResourcePath += $_.Key
+                $currentResourcePath += $_.Identifier
                 $rule = Get-BloomItem `
                     -StoreName $ruleStore.Name `
-                    -Key $_.Key
-                $resourceConfigObject = [ordered]@{}
+                    -Key $_.Identifier
+                # $resourceConfigObject = [ordered]@{}
                 # $policyObject = [ordered]@{
                 #     MinLength = $null
                 #     MaxLength = $null
@@ -234,7 +240,7 @@ try {
                 # }
 
                 $policyObject = New-AzResourceNamePolicy `
-                    -ResourcePath $_.Key `
+                    -ResourcePath $_.Identifier `
                     -MinLength $rule.value.MinLength `
                     -MaxLength $rule.value.MaxLength `
                     -ValidChars $rule.value.ValidChars `
@@ -295,17 +301,22 @@ try {
                 #     }
                 # }
 
-                Merge-Dictionary `
-                    -InputObject $resourceConfigObject `
-                    -Source $policyObject `
-                    -Path "['policy']" `
-                | Out-Null
+                # $resourceConfigObject.policy = $policyObject
+                $providerConfigObject[$_.Identifier] = [ordered]@{
+                    policy = $policyObject
+                }
 
-                Merge-Dictionary `
-                    -InputObject $providerConfigObject `
-                    -Source $resourceConfigObject `
-                    -Path "['$($_.Key)']"
-                | Out-Null
+                # Merge-Dictionary `
+                #     -InputObject $resourceConfigObject `
+                #     -Source $policyObject `
+                #     -Path "['policy']" `
+                # | Out-Null
+
+                # Merge-Dictionary `
+                #     -InputObject $providerConfigObject `
+                #     -Source $resourceConfigObject `
+                #     -Path "['$($_.Key)']"
+                # | Out-Null
 
                 # if (
                 #     -not (
@@ -360,10 +371,12 @@ try {
             Get-AzResourceEndpointFromApiSpecs `
                 -SpecsObject $specsObject `
                 -Provider $item.Provider `
-                -ResourcePath $currentResourcePath `
-                -AsKeyValue `
+                -ResourcePath $currentResourcePath
             | ForEach-Object {
+                # $resourceConfigObject = [ordered]@{}
                 $endpointItem = $_
+                $hasCheckNameEndpoint = $false
+                $objectPath = $null
 
                 @(
                     'checkName',
@@ -376,21 +389,137 @@ try {
                         return
                     }
 
+                    switch ($_) {
+                        ('checkname') {
+                            $hasCheckNameEndpoint = $true
+                            $objectPath = @(
+                                'parameters',
+                                'responses'
+                            )
+                        }
+                        ('get') {
+                            $objectPath = @(
+                                'parameters'
+                            )
+                        }
+                    }
+
                     $endpointItem.Value.$_ = $endpointValue `
                     | Resolve-AzApiSpecs `
-                        -BasePath $item.Path
+                        -BasePath $item.Path `
+                        -Path $objectPath
+
+                    switch ($_) {
+                        ('get') {
+                            $constraintsObject = Get-AzResourceNamePolicyConstraintFromEndpoint `
+                                -InputObject $endpointValue `
+                                -ProviderConfigObject $providerConfigObject `
+                                -EndpointItem $endpointItem
+
+                            if ($constraintsObject) {
+                                Merge-Dictionary `
+                                    -InputObject $providerConfigObject `
+                                    -Source $constraintsObject `
+                                    -Path "['$($endpointItem.Identifier)'].['policy'].['constraints']" `
+                                | Out-Null
+                            }
+
+                            # $nameParameter = $endpointValue.parameters `
+                            # | Where-Object {
+                            #     $_.name -imatch 'name' `
+                            #     -and $_.in -ieq 'path'
+                            # } `
+                            # | Select-Object `
+                            #     -Last 1
+
+                            # if ($nameParameter) {
+                            #     $resourceConfigObject = $providerConfigObject[$endpointItem.Identifier]
+
+                            #     if (
+                            #         $resourceConfigObject `
+                            #         -and $resourceConfigObject.policy.metadata.source.type -ine 'official docs'
+                            #     ) {
+                            #         $constraintsObject = [ordered]@{}
+
+                            #         @(
+                            #             'minLength',
+                            #             'maxLength',
+                            #             'pattern'
+                            #         ) `
+                            #         | ForEach-Object {
+                            #             $value = $nameParameter.$_
+                                        
+                            #             if ($value) {
+                            #                 switch ($_) {
+                            #                     ('pattern') {
+                            #                         $lengthConstraint = $value `
+                            #                         | Get-LengthConstraintFromPattern
+
+                            #                         @(
+                            #                             'minLength',
+                            #                             'maxLength'
+                            #                         ) `
+                            #                         | ForEach-Object {
+                            #                             if ($constraintsObject.Contains($_)) {
+                            #                                 return
+                            #                             }
+
+                            #                             $constraintsValue = $lengthConstraint.$_
+                                                        
+                            #                             if ($constraintsValue) {
+                            #                                 $constraintsObject.$_ = $constraintsValue
+                            #                             }
+                            #                         }
+                            #                     }
+                            #                 }
+
+                            #                 $constraintsObject.$_ = $value
+                            #             }
+                            #         }
+
+                            #         Merge-Dictionary `
+                            #             -InputObject $providerConfigObject `
+                            #             -Source $constraintsObject `
+                            #             -Path "['$($endpointItem.Identifier)'].['policy'].['constraints']" `
+                            #         | Out-Null
+                            #     }
+                            # }
+                        }
+                    }
+                }
+
+                # $resourceConfigObject.Endpoints = $endpointItem.Value
+                # $providerConfigObject[$endpointItem.Key].endpoints = $endpointItem.Value
+
+                if ($hasCheckNameEndpoint) {
+                    if ($providerConfigObject.Contains($endpointItem.Identifier)) {
+                        Merge-Dictionary `
+                            -InputObject $providerConfigObject `
+                            -Source $endpointItem.Value `
+                            -Path "['$($endpointItem.Identifier)'].['endpoints']" `
+                        | Out-Null
+                    }
+                    else {
+                        @{
+                            key = $endpointItem.Identifier
+                            value = $endpointItem.Value
+                        } `
+                        | Set-BloomItem `
+                            -StoreName $endpointStore.Name
+                    }
                 }
 
                 # $global:Endpoint[$_.Key] = $endpointItem.Value
-                @{
-                    key = $endpointItem.Key
-                    value = $endpointItem.Value
-                } `
-                | Set-BloomItem `
-                    -StoreName $endpointStore.Name
+                # @{
+                #     key = $endpointItem.Key
+                #     value = $endpointItem.Value
+                # } `
 
-                # Track key for endpoints
-                $endpointsKeys += $endpointItem.Key
+                # | Set-BloomItem `
+                #     -StoreName $endpointStore.Name
+
+                # # Track key for endpoints
+                # $endpointsKeys += $endpointItem.Key
 
                 # $global:Endpoint[$_.Key] = $_.Value `
                 # | Resolve-AzApiSpecs `
@@ -445,9 +574,12 @@ try {
             }
         }
 
+    Write-Host "Total Resource Paths: $($global:ResourceCount)"
     Write-Host "Abbreviations count: $(${Az.Naming.Config}.ResourceAbbreviation.Keys.Count)"
 
-    Write-Host "Total Resource Paths: $($global:ResourceCount)"
+    Build-BloomStoreIndex `
+        -StoreName $endpointStore.Name `
+        -PassThru
 
     # exit
 

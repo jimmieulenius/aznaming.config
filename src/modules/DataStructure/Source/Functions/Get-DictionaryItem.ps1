@@ -30,7 +30,7 @@ function Get-DictionaryItem {
             -Path $Path `
             -ScriptBlock {
                 return $_
-            }
+            } `
         | Select-Object `
             -Last 1
     }

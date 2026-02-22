@@ -6,10 +6,7 @@ function Get-AzProviderResourceFromApiSpecs {
 
         [Parameter(Mandatory = $true)]
         [string]
-        $Provider,
-
-        [Switch]
-        $AsKeyValue
+        $Provider
     )
 
     $SpecsObject.paths `
@@ -29,20 +26,15 @@ function Get-AzProviderResourceFromApiSpecs {
                         -ErrorAction 'SilentlyContinue'
                 ) -icontains 'put'
             ) {
-                $key = (
+                $identifier = (
                     $path `
                     | Get-AzResourcePath `
                         -Provider $Provider
                 ).Path
 
-                if ($AsKeyValue) {
-                    @{
-                        Key = $key
-                        Value = $_.Value
-                    }
-                }
-                else {
-                    $key
+                @{
+                    Identifier = $identifier
+                    Value = $_.Value
                 }
             }
         }

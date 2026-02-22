@@ -9,24 +9,22 @@ function Get-AzResourceEndpointFromApiSpecs {
         $Provider,
 
         [string[]]
-        $ResourcePath = @(),
-
-        [Switch]
-        $AsKeyValue
+        $ResourcePath = @()
     )    
 
     if ($SpecsObject.ContainsKey('paths')) {
         $SpecsObject.paths.GetEnumerator() `
         | ForEach-Object {
             # $path = $_.Key
+            $endpoint = $_.Value
 
-            $key = (
+            $identifier = (
                 $_.Key `
                 | Get-AzResourcePath `
                     -Provider $Provider
             ).Path
 
-            $_.Value.GetEnumerator() `
+            $endpoint.GetEnumerator() `
             | ForEach-Object {
                 if ($_.Value.deprecated) {
                     return
@@ -39,7 +37,8 @@ function Get-AzResourceEndpointFromApiSpecs {
                 }
                 elseif (
                     $_.Key -ieq 'get' `
-                    -and $ResourcePath -icontains $key
+                    -and $ResourcePath -icontains $identifier `
+                    -and $endpoint.ContainsKey('put')
                 ) {
                     $endpointName = 'get'
                 }
@@ -54,23 +53,18 @@ function Get-AzResourceEndpointFromApiSpecs {
                     #         -Provider $Provider
                     # ).Path
 
-                    if ($AsKeyValue) {
-                        @{
-                            Key = $key
-                            Value = @{
-                                $endpointName = (
-                                    $_.Value `
-                                    | Merge-Dictionary `
-                                        -Source @{
-                                            method = $_.Key
-                                        } `
-                                        -PassThru
-                                )
-                            }
+                    @{
+                        Identifier = $identifier
+                        Value = @{
+                            $endpointName = (
+                                $_.Value `
+                                | Merge-Dictionary `
+                                    -Source @{
+                                        method = $_.Key
+                                    } `
+                                    -PassThru
+                            )
                         }
-                    }
-                    else {
-                        $key
                     }
                 }
             }

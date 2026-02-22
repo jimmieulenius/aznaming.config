@@ -56,6 +56,9 @@ Copyright = '(c) Jimmie Ulenius. All rights reserved.'
 # Modules that must be imported into the global environment prior to importing this module
 RequiredModules = @(
     'Az.Docs',
+    'BloomStore',
+    'DataStructure',
+    'Json',
     'PSModule'
 )
 
@@ -75,11 +78,13 @@ RequiredModules = @(
 NestedModules = @(
     'Source/Functions/Add-AzResourceCategory.ps1',
     'Source/Functions/Add-JsonLine.ps1',
+    'Source/Functions/Build-AzResourceNameConfig.ps1',
     'Source/Functions/Convert-ConstraintToRegex.ps1',
     'Source/Functions/ConvertTo-SanitizedCategory.ps1',
     'Source/Functions/Get-AzProviderResourceFromApiSpecs.ps1',
-    'Source/Functions/Get-AzResourceEndpointFromApiSpecs.ps1',
     'Source/Functions/Get-AzResourceCategory.ps1',
+    'Source/Functions/Get-AzResourceEndpointFromApiSpecs.ps1',
+    'Source/Functions/Get-AzResourceNamePolicyConstraintFromEndpoint.ps1',
     'Source/Functions/Get-AzResourceNameRule.ps1',
     'Source/Functions/Get-AzResourcePath.ps1',
     'Source/Functions/Initialize-AzResourceAbbreviation.ps1',
@@ -95,20 +100,7 @@ NestedModules = @(
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
-    'Add-JsonLine',
-    'Get-AzProviderResourceFromApiSpecs',
-    'Get-AzResourceEndpointFromApiSpecs',
-    'Add-AzResourceCategory',
-    'Get-AzResourceCategory',
-    'Get-AzResourceNameRule',
-    'Get-AzResourcePath',
-    'Initialize-AzResourceAbbreviation',
-    'Initialize-AzResourceNameRule',
-    'Invoke-AzApiSpecsItem',
-    'New-AzResourceNamePolicy',
-    'Resolve-AzApiSpecs',
-    'Set-AzResourceAbbreviation',
-    'Split-AzResourcePath'
+    'Build-AzResourceNameConfig'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
