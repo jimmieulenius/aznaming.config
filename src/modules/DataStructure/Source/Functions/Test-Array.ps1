@@ -1,9 +1,6 @@
-function Get-IsArray {
+function Test-Array {
     param (
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true
-        )]
+        [Parameter(ValueFromPipeline = $true)]
         [object]
         $InputObject,
 
@@ -18,6 +15,10 @@ function Get-IsArray {
         )
     )
 
+    if ($null -eq $InputObject) {
+        return $false
+    }
+
     foreach ($arrayTypeItem in $ArrayType) {
         switch ($arrayTypeItem) {
             ('Array') {
@@ -29,7 +30,7 @@ function Get-IsArray {
             #     if ($InputObject -is [System.Collections.IEnumerable]) {
             #         return -not (
             #             $InputObject `
-            #             | Get-IsDictionary
+            #             | Test-Dictionary
             #         )
             #     }
             # }

@@ -14,7 +14,7 @@ function Get-DictionaryKey {
 
     if (
         $InputObject `
-        | Get-IsDictionary `
+        | Test-Dictionary `
             -DictionaryType @(
                 'Hashtable',
                 'Ordered'
@@ -24,7 +24,7 @@ function Get-DictionaryKey {
     }
     elseif (
         $InputObject `
-        | Get-IsDictionary `
+        | Test-Dictionary `
             -DictionaryType 'PSCustomObject'
     ) {
         $result = $InputObject.PSObject.Properties.Name

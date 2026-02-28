@@ -66,7 +66,7 @@ function Write-JsonItem {
                 $Writer.WriteEndArray()
             }
             elseif (
-                Get-IsDictionary `
+                Test-Dictionary `
                     -InputObject $Value
             ) {
                 $Writer.WriteStartObject()

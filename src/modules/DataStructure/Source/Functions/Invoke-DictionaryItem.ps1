@@ -42,10 +42,10 @@ function Invoke-DictionaryItem {
         return (
             (
                 $InputObject `
-                | Get-IsDictionary
+                | Test-Dictionary
             ) -or (
                 $InputObject `
-                | Get-IsArray
+                | Test-Array
             )
         )
     }
@@ -67,7 +67,7 @@ function Invoke-DictionaryItem {
         )
 
         if (
-            Get-IsDictionary `
+            Test-Dictionary `
                 -InputObject $InputObject
         ) {
             $InputObject `
@@ -103,7 +103,7 @@ function Invoke-DictionaryItem {
             }
         }
         elseif (
-            Get-IsArray `
+            Test-Array `
                 -InputObject $InputObject
         ) {
             $arrayIndex = 0
@@ -179,7 +179,7 @@ function Invoke-DictionaryItem {
     if (
         -not (
             $InputObject `
-            | Get-IsDictionary
+            | Test-Dictionary
         )
     ) {
         Write-Error `

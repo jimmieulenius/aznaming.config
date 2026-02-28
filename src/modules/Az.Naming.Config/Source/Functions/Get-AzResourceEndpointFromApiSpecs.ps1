@@ -15,7 +15,7 @@ function Get-AzResourceEndpointFromApiSpecs {
     if ($SpecsObject.ContainsKey('paths')) {
         $SpecsObject.paths.GetEnumerator() `
         | ForEach-Object {
-            # $path = $_.Key
+            $path = $_.Key
             $endpoint = $_.Value
 
             $identifier = (
@@ -24,9 +24,17 @@ function Get-AzResourceEndpointFromApiSpecs {
                     -Provider $Provider
             ).Path
 
+            $parameters = $null
+
             $endpoint.GetEnumerator() `
             | ForEach-Object {
                 if ($_.Value.deprecated) {
+                    return
+                }
+
+                if ($_.Key -ieq 'parameters') {
+                    $parameters = $_.Value
+
                     return
                 }
 
@@ -46,27 +54,51 @@ function Get-AzResourceEndpointFromApiSpecs {
                     return
                 }
 
-                if ($endpointName) {
-                    # $key = (
-                    #     $path `
-                    #     | Get-AzResourcePath `
-                    #         -Provider $Provider
-                    # ).Path
+                if (-not $endpointName) {
+                    return
+                }
 
-                    @{
-                        Identifier = $identifier
-                        Value = @{
-                            $endpointName = (
-                                $_.Value `
-                                | Merge-Dictionary `
-                                    -Source @{
-                                        method = $_.Key
-                                    } `
-                                    -PassThru
-                            )
-                        }
+                $endpointValue = (
+                    $_.Value `
+                    | Merge-Dictionary `
+                        -Source @{
+                            path = $path
+                            method = $_.Key
+                        } `
+                        -PassThru
+                )
+
+                # $result = @{
+                #     Identifier = $identifier
+                #     Value = @{
+                #         $endpointName = (
+                #             $_.Value `
+                #             | Merge-Dictionary `
+                #                 -Source @{
+                #                     path = $path
+                #                     method = $_.Key
+                #                 } `
+                #                 -PassThru
+                #         )
+                #     }
+                # }
+
+                if ($parameters) {
+                    $endpointParameters = $_.Value.parameters `
+                    | Merge-Parameters `
+                        -Source $parameters
+
+                    if ($endpointParameters) {
+                        $endpointValue.parameters = $endpointParameters
                     }
                 }
+
+                @{
+                        Identifier = $identifier
+                        Value = @{
+                            $endpointName = $endpointValue
+                        }
+                    }
             }
 
             # $_.Value.post.operationId,
@@ -79,4 +111,52 @@ function Get-AzResourceEndpointFromApiSpecs {
             # }
         }
     }
+}
+
+function Merge-Parameters {
+    param (
+        [Parameter(ValueFromPipeline = $true)]
+        [object]
+        $InputObject,
+
+        [object]
+        $Source
+    )
+
+    if (-not $InputObject) {
+        return $Source
+    }
+
+    if (
+        (
+            Test-Array `
+                -InputObject $InputObject
+        ) `
+        -and (
+            Test-Array `
+                -InputObject $Source
+        )
+    ) {
+        $Source `
+        | ForEach-Object {
+            $indexToUpdate = $null
+
+            for ($index = 0; $index -lt $InputObject.Count; $index++) {
+                if ($InputObject[$index].name -ieq $_.name) {
+                    $indexToUpdate = $index
+
+                    break
+                }
+            }
+
+            if ($indexToUpdate) {
+                $InputObject[$indexToUpdate] = $_
+            }
+            else {
+                $InputObject += $_
+            }
+        }
+    }
+
+    return $InputObject
 }

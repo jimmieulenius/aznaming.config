@@ -18,7 +18,7 @@ function Get-AzProviderResourceFromApiSpecs {
             if (
                 (
                     $_.Value `
-                    | Get-IsDictionary
+                    | Test-Dictionary
                 ) `
                 -and (
                     $_.Value `
@@ -31,6 +31,16 @@ function Get-AzProviderResourceFromApiSpecs {
                     | Get-AzResourcePath `
                         -Provider $Provider
                 ).Path
+
+                if (
+                    -not (
+                        $identifier `
+                        | Split-AzResourcePath `
+                            -Entity
+                    )
+                ) {
+                    return
+                }
 
                 @{
                     Identifier = $identifier

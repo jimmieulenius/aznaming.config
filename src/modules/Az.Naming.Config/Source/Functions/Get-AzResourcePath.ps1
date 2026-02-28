@@ -12,14 +12,28 @@ function Get-AzResourcePath {
         $Provider
     )
 
-    $entity = (
-        (
-            $InputObject -split $Provider
-        )[1] `
+    $InputObject = $InputObject `
         -replace '\{[^}]*\}', '' `
         -replace '/+', '/' `
         -replace ' ', ''
-    ).Trim('/')
+
+    if ($InputObject -imatch [regex]::Escape($Provider)) {
+        $entity = (
+            $InputObject -split $Provider
+        )[1]
+    }
+    else {
+        $entity = $InputObject
+    }
+
+    $entity = $entity.Trim('/')
+
+    # $entity = (
+    #     $entity `
+    #     -replace '\{[^}]*\}', '' `
+    #     -replace '/+', '/' `
+    #     -replace ' ', ''
+    # ).Trim('/')
 
     return @{
         Provider = $Provider

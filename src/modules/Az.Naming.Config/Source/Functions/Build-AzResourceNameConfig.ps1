@@ -19,7 +19,7 @@ function Build-AzResourceNameConfig {
             }
         }
 
-    $global:ResourceCount = 0
+    # $global:ResourceCount = 0
 
     # Register global Bloom Store for all config items
     $ruleStore = Register-BloomStore `
@@ -28,7 +28,7 @@ function Build-AzResourceNameConfig {
         -Force `
         -PassThru
 
-    $validCharsList = @()
+    # $validCharsList = @()
 
     Initialize-AzResourceNameRule `
         -Process {
@@ -40,9 +40,9 @@ function Build-AzResourceNameConfig {
                 -Path 'Value' `
             | Out-Null
 
-            if ($_.Value.ValidChars) {
-                $validCharsList += $_.Value.ValidChars
-            }
+            # if ($_.Value.ValidChars) {
+            #     $validCharsList += $_.Value.ValidChars
+            # }
 
             # Store in Bloom Store
             @{
@@ -52,28 +52,28 @@ function Build-AzResourceNameConfig {
             | Set-BloomItem `
                 -StoreName $ruleStore.Name
 
-            $global:ResourceCount++
+            # $global:ResourceCount++
         } `
         -Force
 
-    Build-BloomStoreIndex `
+    $ruleIndex = Build-BloomStoreIndex `
         -StoreName $ruleStore.Name `
-    | Out-Null
+        -PassThru
 
-    New-Item `
-        -Path "$Destination/validChars.txt" `
-        -ItemType 'File' `
-        -Force `
-    | Out-Null
+    # New-Item `
+    #     -Path "$Destination/validChars.txt" `
+    #     -ItemType 'File' `
+    #     -Force `
+    # | Out-Null
 
-    $validCharsList `
-    | Sort-Object `
-        -Unique `
-    | ForEach-Object {
-        Add-Content `
-            -Path "$Destination/validChars.txt" `
-            -Value $_
-    }
+    # $validCharsList `
+    # | Sort-Object `
+    #     -Unique `
+    # | ForEach-Object {
+    #     Add-Content `
+    #         -Path "$Destination/validChars.txt" `
+    #         -Value $_
+    # }
 
     $endpointStore = Register-BloomStore `
         -Name 'Endpoint' `
@@ -92,8 +92,14 @@ function Build-AzResourceNameConfig {
         | Out-Null
     }
 
+    $global:UsedRuleList = [System.Collections.Generic.List[string]]::new()
+    $global:PoliciesCount = 0
+    $global:PolicyFromApiSpecsCount = 0
+    $global:PolicyFromOfficialDocsCount = 0
     $global:ConstraintsFromApiSpecsCount = 0
     $global:CheckNameEndpointCount = 0
+    $global:UnresolvedAbbreviationCount = 0
+    $global:CheckNameEndpointList = [System.Collections.Generic.List[string]]::new()
 
     Invoke-AzApiSpecsItem `
         -Path $ApiSpecsPath `
@@ -133,6 +139,10 @@ function Build-AzResourceNameConfig {
                     -StoreName $ruleStore.Name `
                     -Key $_.Identifier
 
+                if ($rule) {
+                    $global:UsedRuleList.Add($_.Identifier)
+                }
+
                 $policyObject = New-AzResourceNamePolicy `
                     -ResourcePath $_.Identifier `
                     -MinLength $rule.value.MinLength `
@@ -141,21 +151,32 @@ function Build-AzResourceNameConfig {
                     -Abbreviation $rule.value.Resource.Abbreviation `
                     -Source (
                         $rule.value.Source `
-                            ? @{
-                                type = $rule.value.Source
-                                url = ${Az.Docs}.ResourceNameRulesUrl
-                            } `
-                            : @{
-                                type = "official api specs"
-                                filePath = [System.IO.Path]::GetRelativePath($ApiSpecsPath, $item.Path) -replace '\\', '/'
-                            }
+                        ? @{
+                            type = $rule.value.Source
+                            url = ${Az.Docs}.ResourceNameRulesUrl
+                        } `
+                        : @{
+                            type = "official api specs"
+                            filePath = [System.IO.Path]::GetRelativePath($ApiSpecsPath, $item.Path) -replace '\\', '/'
+                        }                            
                     )
 
                 $providerConfigObject[$_.Identifier] = [ordered]@{
                     policy = $policyObject
                 }
 
-                $global:ResourceCount++
+                if ($policyObject.metadata.isTodo) {
+                    $global:UnresolvedAbbreviationCount++
+                }
+
+                if ($policyObject.metadata.source.type -eq "official api specs") {
+                    $global:PolicyFromApiSpecsCount++
+                }
+                elseif ($policyObject.metadata.source.type -eq "official docs") {
+                    $global:PolicyFromOfficialDocsCount++
+                }
+
+                $global:PoliciesCount++
             }
 
             Get-AzResourceEndpointFromApiSpecs `
@@ -181,19 +202,16 @@ function Build-AzResourceNameConfig {
                     }
 
                     switch ($_) {
-                        ('checkname') {
-                            $hasCheckNameEndpoint = $true
+                        ('checkName') {
                             $objectPath = @(
                                 'parameters',
                                 'responses'
                             )
-                            $checkNameEndpoint = $endpointValue
                         }
                         ('get') {
                             $objectPath = @(
                                 'parameters'
                             )
-                            $getEndpoint = $endpointValue
                         }
                     }
 
@@ -204,8 +222,11 @@ function Build-AzResourceNameConfig {
                     $endpointItem.Value.$_ = $endpointValue
 
                     switch ($_) {
-                        ('checkname') {
+                        ('checkName') {
+                            $hasCheckNameEndpoint = $true
                             $checkNameEndpoint = $endpointValue
+
+                            $global:CheckNameEndpointList.Add($endpointItem.Identifier)
                         }
                         ('get') {
                             $getEndpoint = $endpointValue
@@ -236,7 +257,37 @@ function Build-AzResourceNameConfig {
                 ).GetEnumerator() `
                 | ForEach-Object {
                     if ($_.Value) {
-                        $endpointConfigObject[$_.Key] = $_.Value
+                        $typeParameter = $checkNameEndpoint.parameters `
+                        | Where-Object {
+                            $_.name -ieq 'parameters'
+                        } `
+                        | ForEach-Object {
+                            $_.schema.properties.type
+                        }
+
+                        if ($typeParameter) {
+                            if ($typeParameter.enum.Count -eq 1) {
+                                $typeParameter.value = $typeParameter.enum[0]
+                            }
+                        }
+
+                        $parameterObject = @{
+                            Path = $_.Value.path
+                            Method = $_.Value.method
+                            OperationId = $_.Value.operationId
+                            Parameter = $_.Value.parameters
+                            ParameterValue = @{
+                                'api-version' = $specsObject.info.version
+                            }
+                        }
+
+                        switch ($_.Key) {
+                            ('checkName') {
+                                $parameterObject.Response = $_.Value.responses
+                            }
+                        }
+
+                        $endpointConfigObject[$_.Key] = New-AzResourceEndpoint @parameterObject
                     }
                 }
 
@@ -290,11 +341,66 @@ function Build-AzResourceNameConfig {
         -StoreName $endpointStore.Name `
         -PassThru
 
+    $unusedRuleList = [System.Collections.Generic.List[string]]::new()
+
+    Get-BloomItem `
+        -StoreName $ruleStore.Name `
+        -AsHashtable `
+    | ForEach-Object {
+        $ruleKey = $_.key
+
+        foreach ($usedRuleListItem in $global:UsedRuleList) {
+            if ($usedRuleListItem -ieq $ruleKey) {
+                return
+            }
+        }
+
+        $unusedRuleList.Add($ruleKey)
+    }
+
     Write-Host $null
     Write-Host $null
-    Write-Host "Total Resource Paths: $($global:ResourceCount)"
-    Write-Host "Abbreviations count: $(${Az.Naming.Config}.ResourceAbbreviation.Keys.Count)"
-    Write-Host "Constraints from API Specs count: $($global:ConstraintsFromApiSpecsCount)"
-    Write-Host "Checkname endpoints count: $($global:CheckNameEndpointCount)"
-    Write-Host "Total Endpoint Count: $($endpointIndex.KeyCount)"
+
+    Write-Host "Unused Rules List:"
+    $unusedRuleList `
+    | Sort-Object `
+    | ForEach-Object {
+        Write-Host "  $_"
+    }
+
+    Write-Host $null
+
+    Write-Host "Unresolved CheckName Endpoints List:"
+    $global:CheckNameEndpointList `
+    | Sort-Object `
+    | ForEach-Object {
+        Write-Host "  $_"
+    }
+
+    Write-Host $null
+
+    Write-Host "Rules count:"
+    Write-Host "  Total: $($ruleIndex.KeyCount)"
+    Write-Host "  Used: $($global:UsedRuleList.Count)"
+    Write-Host "Policies count:"
+    Write-Host "  Total: $($global:PoliciesCount)"
+    Write-Host "  From official docs: $($global:PolicyFromOfficialDocsCount)"
+    Write-Host "  From official API specs: $($global:PolicyFromApiSpecsCount)"
+    Write-Host "Abbreviations count:"
+    Write-Host "  Total: $(${Az.Naming.Config}.ResourceAbbreviation.Keys.Count)"
+    Write-Host "  Unresolved: $($global:UnresolvedAbbreviationCount)"
+    Write-Host "Constraints count:"
+    Write-Host "  From API specs: $($global:ConstraintsFromApiSpecsCount)"
+    Write-Host "Endpoints count:"
+    Write-Host "  Total: $($endpointIndex.KeyCount)"
+    Write-Host "  CheckName: $($global:CheckNameEndpointCount)"
+
+    # Write-Host "Total Policies count: $($global:PoliciesCount)"
+    # Write-Host "Policies from official docs count: $($global:PolicyFromOfficialDocsCount)"
+    # Write-Host "Policies from official API specs count: $($global:PolicyFromApiSpecsCount)"
+    # Write-Host "Abbreviations count: $(${Az.Naming.Config}.ResourceAbbreviation.Keys.Count)"
+    # Write-Host "Unresolved Abbreviations count: $($global:UnresolvedAbbreviationCount)"
+    # Write-Host "Constraints from API Specs count: $($global:ConstraintsFromApiSpecsCount)"
+    # Write-Host "Checkname endpoints count: $($global:CheckNameEndpointCount)"
+    # Write-Host "Total Endpoint Count: $($endpointIndex.KeyCount)"
 }

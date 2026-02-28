@@ -224,7 +224,7 @@ function Write-EachToJson {
             }
 
             if (
-                Get-IsDictionary `
+                Test-Dictionary `
                     -InputObject $result `
             ) {
                 $tag = $result.Tag

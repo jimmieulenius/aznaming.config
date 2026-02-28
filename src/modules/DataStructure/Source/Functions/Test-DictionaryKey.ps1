@@ -1,4 +1,4 @@
-function Get-DictionaryItem {
+function Test-DictionaryKey {
     [CmdletBinding()]
     param (
         [Parameter(
@@ -9,7 +9,7 @@ function Get-DictionaryItem {
         $InputObject,
 
         [string]
-        $Path
+        $Key
     )
 
     if (
@@ -24,21 +24,13 @@ function Get-DictionaryItem {
         return
     }
 
-    if ($Path) {
-        Invoke-DictionaryItem `
+    if (
+        Get-DictionaryKey `
             -InputObject $InputObject `
-            -Path $Path `
-            -ScriptBlock {
-                return $_
-            } `
-        | Select-Object `
-            -Last 1
+            -Key $Key
+    ) {
+        return $true
     }
-    else {
-        Invoke-DictionaryItem `
-            -InputObject $InputObject `
-            -ScriptBlock {
-                return $_
-            }
-    }
+
+    return $false
 }

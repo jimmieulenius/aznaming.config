@@ -23,7 +23,7 @@ function Set-DictionaryItem {
 
     if (
         $InputObject `
-        | Get-IsDictionary `
+        | Test-Dictionary `
             -DictionaryType @(
                 'Hashtable',
                 'Ordered'
@@ -33,7 +33,7 @@ function Set-DictionaryItem {
     }
     elseif (
         $InputObject `
-        | Get-IsDictionary `
+        | Test-Dictionary `
             -DictionaryType 'PSCustomObject'
     ) {
         $InputObject `

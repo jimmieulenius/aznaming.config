@@ -184,9 +184,13 @@ function Resolve-AzApiSpecs {
             if (
                 (
                     $flattenItem.Value `
-                    | Get-IsDictionary
+                    | Test-Dictionary
                 ) `
-                -and $flattenItem.Value.ContainsKey('x-ms-client-flatten') `
+                -and (
+                    $flattenItem.Value `
+                    | Test-DictionaryKey `
+                        -Key 'x-ms-client-flatten' `
+                ) `
                 -and $flattenItem.Value['x-ms-client-flatten'] -eq $true `
                 -and (
                     $flattenItem.Path `

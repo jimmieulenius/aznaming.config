@@ -75,12 +75,13 @@ NestedModules = @(
     'Source/Functions/Add-PathSegment.ps1',
     'Source/Functions/Get-DictionaryItem.ps1',
     'Source/Functions/Get-DictionaryKey.ps1',
-    'Source/Functions/Get-IsArray.ps1',
-    'Source/Functions/Get-IsDictionary.ps1',
     'Source/Functions/Get-PathSegment.ps1',
     'Source/Functions/Invoke-DictionaryItem.ps1',
     'Source/Functions/Merge-Dictionary.ps1',
     'Source/Functions/Set-DictionaryItem.ps1',
+    'Source/Functions/Test-Array.ps1',
+    'Source/Functions/Test-Dictionary.ps1',
+    'Source/Functions/Test-DictionaryKey.ps1',
     'Source/Variables.ps1'
 )
 
@@ -89,11 +90,13 @@ FunctionsToExport = @(
     'Add-PathSegment',
     'Get-DictionaryItem',
     'Get-DictionaryKey',
-    'Get-IsDictionary',
     'Get-PathSegment',
     'Invoke-DictionaryItem',
     'Merge-Dictionary',
-    'Set-DictionaryItem'
+    'Set-DictionaryItem',
+    'Test-Array',
+    'Test-Dictionary',
+    'Test-DictionaryKey'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

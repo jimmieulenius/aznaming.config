@@ -1,9 +1,6 @@
-function Get-IsDictionary {
+function Test-Dictionary {
     param (
-        [Parameter(
-            # Mandatory = $true,
-            ValueFromPipeline = $true
-        )]
+        [Parameter(ValueFromPipeline = $true)]
         [object]
         $InputObject,
 

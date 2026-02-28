@@ -99,24 +99,29 @@ function New-AzResourceNamePolicy {
         }
     }
 
+    $result = [ordered]@{}
+
+    if (-not $Abbreviation) {
+        $abbreviationObject = New-AzResourceAbbreviation `
+            -ResourcePath $ResourcePath `
+            -AsTodo
+
+        $Abbreviation = $abbreviationObject.Value
+
+        if ($abbreviationObject.IsTodo) {
+            $metadata.isTodo = $true
+        }
+    }
+
     if (-not $metadata.Keys.Count) {
         $metadata = $null
     }
-
-    $result = [ordered]@{}
 
     @{
         metadata = $metadata
         constraints = $constraints
         defaults = @{
-            RESOURCE_TYPE = if ($Abbreviation) {
-                $Abbreviation
-            }
-            else {
-                New-AzResourceAbbreviation `
-                    -ResourcePath $ResourcePath `
-                    -AsTodo
-            }
+            RESOURCE_TYPE = $Abbreviation
         }
     }.GetEnumerator() `
     | ForEach-Object {

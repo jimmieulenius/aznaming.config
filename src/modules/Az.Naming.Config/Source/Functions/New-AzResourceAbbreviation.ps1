@@ -32,7 +32,10 @@ function New-AzResourceAbbreviation {
     # Validate we have the minimum required component
     if (-not $components.EntityLeafAbbreviation) {
         if ($AsTodo) {
-            return '<TODO>'
+            return @{
+                Value = '<TODO>'
+                IsTodo = $true
+            }
         }
 
         Write-Error 'Could not generate abbreviation from ResourcePath components.'
@@ -52,11 +55,15 @@ function New-AzResourceAbbreviation {
     }
 
     # Try each candidate to find one not already in use
-    $result = $null
+    $result = @{
+        Value = $null
+        IsTodo = $false
+    }
 
     foreach ($candidate in $candidates) {
         if ($AsTodo) {
             $candidate = "<TODO:$candidate>"
+            $result.IsTodo = $true
         }
 
         if (-not ${Az.Naming.Config}.ResourceAbbreviation.ContainsKey($candidate)) {
@@ -67,9 +74,9 @@ function New-AzResourceAbbreviation {
             #     $candidate
             # }
 
-            $result = $candidate
+            $result.Value = $candidate
 
-            ${Az.Naming.Config}.ResourceAbbreviation[$result] = @{
+            ${Az.Naming.Config}.ResourceAbbreviation[$result.Value] = @{
                 ResourcePath = $ResourcePath
             }
 
@@ -78,7 +85,7 @@ function New-AzResourceAbbreviation {
     }
 
     # If all candidates are taken, append a numeric suffix
-    if (-not $result) {
+    if (-not $result.Value) {
         $baseResult = $candidates[-1]  # Use longest candidate as base
         $counter = 2
         $maxAttempts = 1000
@@ -88,6 +95,7 @@ function New-AzResourceAbbreviation {
 
             if ($AsTodo) {
                 $candidate = "<TODO:$candidate>"
+                $result.IsTodo = $true
             }
 
             if (-not ${Az.Naming.Config}.ResourceAbbreviation.ContainsKey($candidate)) {
@@ -98,7 +106,11 @@ function New-AzResourceAbbreviation {
                 #     $candidate
                 # }
 
-                $result = $candidate
+                $result.Value = $candidate
+
+                ${Az.Naming.Config}.ResourceAbbreviation[$result.Value] = @{
+                    ResourcePath = $ResourcePath
+                }
 
                 break
             }
@@ -106,9 +118,12 @@ function New-AzResourceAbbreviation {
             $counter++
         }
 
-        if (-not $result) {
+        if (-not $result.Value) {
             if ($AsTodo) {
-                return '<TODO>'
+                return @{
+                    Value = '<TODO>'
+                    IsTodo = $true
+                }
             }
 
             Write-Error "Could not generate unique abbreviation after $maxAttempts attempts."

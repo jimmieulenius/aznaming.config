@@ -32,7 +32,7 @@ function Merge-Dictionary {
         if (
             -not (
                 $_.Value `
-                | Get-IsDictionary
+                | Test-Dictionary
             )
         ) {
             Write-Error `
@@ -74,14 +74,14 @@ function Merge-Dictionary {
                     $pathSegmentsItem.ContainerType -eq 'Object' `
                     -and -not (
                         $value `
-                        | Get-IsDictionary
+                        | Test-Dictionary
                     )
                 ) `
                 -or (
                     $pathSegmentsItem.ContainerType -eq 'Array' `
                     -and -not (
                         $value `
-                        | Get-IsArray
+                        | Test-Array
                     )
                 )
             ) {
@@ -140,11 +140,11 @@ function Merge-Dictionary {
             if (
                 (
                     $targetValue `
-                    | Get-IsDictionary
+                    | Test-Dictionary
                 ) `
                 -and (
                     $sourceValue `
-                    | Get-IsDictionary
+                    | Test-Dictionary
                 )
             ) {
                 $currentObj

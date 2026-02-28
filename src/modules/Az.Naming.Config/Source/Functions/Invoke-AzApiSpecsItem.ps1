@@ -5,17 +5,42 @@ function Invoke-AzApiSpecsItem {
         $Path,
 
         [Parameter(Mandatory = $true)]
-        [ScriptBlock]
+        [scriptblock]
         $ScriptBlock,
 
-        [String[]]
-        $ApiType = @('resource-manager'),
+        [string[]]
+        $ApiType = @(
+            'data-plane',
+            'resource-manager'
+        ),
 
-        [String[]]
+        [string[]]
         $VersionPreference = @(
             'stable',
             'preview'
-        )
+        ),
+
+        [scriptblock]
+        $ProviderResolver = {
+            $path = "$($_.FullName)/resource-manager"
+
+            if (
+                Test-Path `
+                    -Path $path `
+                    -PathType 'Container'
+            ) {
+                return (
+                    Get-ChildItem `
+                        -Path $path `
+                        -Directory `
+                    | Where-Object {
+                        $_.Name -ine 'common'
+                    } `
+                    | Select-Object `
+                        -First 1
+                ).Name
+            }
+        }
     )
 
     if (
@@ -34,8 +59,15 @@ function Invoke-AzApiSpecsItem {
     | ForEach-Object {
         $providerContainerPath = $_.FullName
 
+        if ($ProviderResolver) {
+            $provider = $_ `
+            | ForEach-Object `
+                -Process $ProviderResolver
+        }
+
         foreach ($apiTypeItem in $ApiType) {
             $apiTypePath = "$providerContainerPath/$apiTypeItem"
+
             if (
                 -not (
                     Test-Path `
@@ -51,57 +83,114 @@ function Invoke-AzApiSpecsItem {
                 -Directory `
                 -ErrorAction 'SilentlyContinue' `
             | ForEach-Object {
-                $provider = $_.Name
+                $provider ??= $_.Name
 
-                foreach ($versionPreferenceItem in $VersionPreference) {
-                    $versionContainerPath = "$($_.FullName)/$versionPreferenceItem"
+                $containers = Get-ChildItem `
+                    -Path $_.FullName `
+                    -Directory `
+                    -ErrorAction 'SilentlyContinue'
 
-                    if (
-                        -not (
-                            Test-Path `
+                if (
+                    (
+                        $containers `
+                        | Where-Object {
+                            $_.Name -imatch "$($VersionPreference -join '|')"
+                        }
+                    ).Count
+                ) {
+                    $containers = $_
+                }
+
+                $containers `
+                | ForEach-Object {
+                    foreach ($versionPreferenceItem in $VersionPreference) {
+                        $versionContainerPath = "$($_.FullName)/$versionPreferenceItem"
+
+                        if (
+                            -not (
+                                Test-Path `
+                                    -Path $versionContainerPath `
+                                    -PathType 'Container'
+                            )
+                        ) {
+                            continue
+                        }
+
+                        # Get-ChildItem `
+                        #     -Path $_.FullName `
+                        #     -Directory `
+                        #     -Filter $versionPreferenceItem `
+                        #     -Recurse `
+                        #     -ErrorAction 'SilentlyContinue' `
+                        # | ForEach-Object {
+                            $specsContainer = Get-ChildItem `
                                 -Path $versionContainerPath `
-                                -PathType 'Container'
-                        )
-                    ) {
-                        continue
-                    }
+                                -Directory `
+                                -ErrorAction 'SilentlyContinue' `
+                            | Sort-Object `
+                                -Property 'Name' `
+                            | Select-Object `
+                                -Last 1
 
-                    $specsContainer = Get-ChildItem `
-                        -Path $versionContainerPath `
-                        -Directory `
-                        -ErrorAction 'SilentlyContinue' `
-                    | Sort-Object `
-                        -Property 'Name' `
-                    | Select-Object `
-                        -Last 1
+                            if (-not $specsContainer) {
+                                return
+                            }
 
-                    if (-not $specsContainer) {
-                        continue
-                    }
+                            Get-ChildItem `
+                                -Path $specsContainer.FullName `
+                                -Filter '*.json' `
+                                -File `
+                                -ErrorAction 'SilentlyContinue' `
+                            | ForEach-Object {
+                                @{
+                                    Provider = $provider
+                                    Version = $specsContainer.Name
+                                    Path = $_.FullName
+                                } `
+                                | ForEach-Object `
+                                    -Process $ScriptBlock
+                            }
 
-                    Get-ChildItem `
-                        -Path $specsContainer.FullName `
-                        -Filter '*.json' `
-                        -File `
-                        -ErrorAction 'SilentlyContinue' `
-                    | ForEach-Object {
-                        # & $ScriptBlock `
-                        #     -InputObject @{
+                            break
+                        # }
+
+                        # $specsContainer = Get-ChildItem `
+                        #     -Path $versionContainerPath `
+                        #     -Directory `
+                        #     -ErrorAction 'SilentlyContinue' `
+                        # | Sort-Object `
+                        #     -Property 'Name' `
+                        # | Select-Object `
+                        #     -Last 1
+
+                        # if (-not $specsContainer) {
+                        #     continue
+                        # }
+
+                        # Get-ChildItem `
+                        #     -Path $specsContainer.FullName `
+                        #     -Filter '*.json' `
+                        #     -File `
+                        #     -ErrorAction 'SilentlyContinue' `
+                        # | ForEach-Object {
+                        #     # & $ScriptBlock `
+                        #     #     -InputObject @{
+                        #     #         Provider = $provider
+                        #     #         Version = $specsContainer.Name
+                        #     #         Path = $_.FullName
+                        #     #     }
+
+                        #     @{
                         #         Provider = $provider
                         #         Version = $specsContainer.Name
                         #         Path = $_.FullName
-                        #     }
+                        #     } `
+                        #     | ForEach-Object `
+                        #         -Process $ScriptBlock
+                        # }
 
-                        @{
-                            Provider = $provider
-                            Version = $specsContainer.Name
-                            Path = $_.FullName
-                        } `
-                        | ForEach-Object `
-                            -Process $ScriptBlock
+                        # break
                     }
-
-                    break
                 }
             }
         }
