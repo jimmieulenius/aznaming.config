@@ -81,7 +81,9 @@ function Register-BloomStore {
         $StoreDirectory,
         
         [object[]]
-        $Key = "key",
+        $Key = @(
+            'key'
+        ),
         
         [switch]
         $AutoBuild,
@@ -89,7 +91,7 @@ function Register-BloomStore {
         [switch]
         $Force,
 
-        [Switch]
+        [switch]
         $PassThru
     )
 

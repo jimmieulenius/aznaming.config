@@ -195,12 +195,20 @@ function Invoke-DictionaryItem {
 
         for ($index = 0; $index -lt $pathSegments.Count; $index++) {
             $pathSegmentsItem = $pathSegments[$index]
-            $value = $currentValue[$pathSegmentsItem.Identifier]
+            switch ($pathSegmentsItem.IdentifierType) {
+                ('Property') {
+                    $value = $currentValue.($pathSegmentsItem.Identifier)
+                }
+                ('Index') {
+                    $value = $currentValue[$pathSegmentsItem.Identifier]
+                }
+            }
+
             $isLastItem = $index -eq $pathSegments.Count - 1
 
             if (-not $value) {
                 Write-Error `
-                    -Message "Path '$CurrentPath' in dictionary does not exist."
+                    -Message "Path '$($pathSegmentsItem.Identifier)' in dictionary does not exist."
 
                 return
             }

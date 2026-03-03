@@ -23,18 +23,34 @@ Build-BloomStoreIndex -StoreName "resources"
 Get-BloomItem -StoreName "resources" -Key "item-500"
 #>
 function Build-BloomStoreIndex {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Default')]
     param(
         [Parameter(
             Mandatory = $true,
+            ParameterSetName = 'Default',
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Parameter(
+            Mandatory = $true,
+            ParameterSetName = 'PassThru',
             ValueFromPipelineByPropertyName = $true
         )]
         [ValidateNotNullOrEmpty()]
         [string]
         $StoreName,
 
+        [Parameter(
+            Mandatory = $true,
+            ParameterSetName = 'PassThru'
+        )]
         [switch]
-        $PassThru
+        $PassThru,
+
+        [Parameter(
+            ParameterSetName = 'PassThru'
+        )]
+        [switch]
+        $Keys
     )
     
     process {
@@ -54,15 +70,34 @@ function Build-BloomStoreIndex {
             $store = $script:BloomStores[$StoreName]
             
             if ($PassThru) {
-                [PSCustomObject]@{
+                $result = @{
                     StoreName = $StoreName
-                    # KeyCount      = if ($store.Index) { $store.Index.Count } else { 0 }
-                    KeyCount = $store.Index `
-                        ? $store.Index.Count `
-                        : 0
+                    # KeyCount = if ($store.Index) {
+                    #     $store.Index.Count
+                    # }
+                    # else {
+                    #     0
+                    # }
+                    # KeyCount = $store.Index `
+                    #     ? $store.Index.Count `
+                    #     : 0
                     BloomSizeKB = [Math]::Round($bloomSize / 1KB, 2)
                     LastRebuilt = $store.LastRebuild
                 }
+
+                if ($Keys) {
+                    $result.Keys = $store.Index.Keys
+                }
+                else {
+                    $result.KeyCount = if ($store.Index) {
+                        $store.Index.Count
+                    }
+                    else {
+                        0
+                    }
+                }
+
+                return [PSCustomObject]$result
             }
         }
         catch {

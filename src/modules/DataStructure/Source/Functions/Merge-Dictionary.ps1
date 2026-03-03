@@ -61,7 +61,7 @@ function Merge-Dictionary {
         foreach ($pathSegmentsItem in $pathSegments[0..($pathSegments.Count - 1)]) {
             switch ($pathSegmentsItem.IdentifierType) {
                 ('Property') {
-                    $value = $currentObj[$pathSegmentsItem.Identifier]
+                    $value = $currentObj.($pathSegmentsItem.Identifier)
                 }
                 ('Index') {
                     $value = $currentObj[$pathSegmentsItem.Identifier]

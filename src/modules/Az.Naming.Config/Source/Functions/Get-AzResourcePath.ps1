@@ -12,6 +12,10 @@ function Get-AzResourcePath {
         $Provider
     )
 
+    if ($path -match '/providers/([^/]+)') {
+        $Provider = $matches[1]  # Contains "Microsoft.Authorization"
+    }
+
     $InputObject = $InputObject `
         -replace '\{[^}]*\}', '' `
         -replace '/+', '/' `

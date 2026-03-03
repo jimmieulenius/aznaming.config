@@ -102,14 +102,18 @@ function New-AzResourceNamePolicy {
     $result = [ordered]@{}
 
     if (-not $Abbreviation) {
-        $abbreviationObject = New-AzResourceAbbreviation `
-            -ResourcePath $ResourcePath `
-            -AsTodo
+        $Abbreviation = ${Az.Naming.Config}.ResourceAbbreviation[$ResourcePath]
 
-        $Abbreviation = $abbreviationObject.Value
+        if (-not $Abbreviation) {
+            $abbreviationObject = New-AzResourceAbbreviation `
+                -ResourcePath $ResourcePath `
+                -AsTodo
 
-        if ($abbreviationObject.IsTodo) {
-            $metadata.isTodo = $true
+            $Abbreviation = $abbreviationObject.Value
+
+            if ($abbreviationObject.IsTodo) {
+                $metadata.isTodo = $true
+            }
         }
     }
 

@@ -8,11 +8,14 @@ function Get-AzResourceNamePolicyConstraintFromEndpoint {
         $InputObject
     )
 
+    # $nameParameter = $InputObject.parameters `
+    # | Where-Object {
+    #     $_.name -imatch 'name' `
+    #     -and $_.in -ieq 'path'
+    # } `
+    # | Select-Object `
+    #     -Last 1
     $nameParameter = $InputObject.parameters `
-    | Where-Object {
-        $_.name -imatch 'name' `
-        -and $_.in -ieq 'path'
-    } `
     | Select-Object `
         -Last 1
 
@@ -20,15 +23,15 @@ function Get-AzResourceNamePolicyConstraintFromEndpoint {
         return
     }
 
-    $resourceConfigObject = $providerConfigObject[$endpointItem.Identifier]
+    # $resourceConfigObject = $providerConfigObject[$endpointItem.Identifier]
 
-    if (-not $resourceConfigObject) {
-        return
-    }
+    # if (-not $resourceConfigObject) {
+    #     return
+    # }
 
-    if ($resourceConfigObject.policy.metadata.source.type -ieq 'official docs') {
-        return
-    }
+    # if ($resourceConfigObject.policy.metadata.source.type -ieq 'official docs') {
+    #     return
+    # }
 
     $result = [ordered]@{}
 

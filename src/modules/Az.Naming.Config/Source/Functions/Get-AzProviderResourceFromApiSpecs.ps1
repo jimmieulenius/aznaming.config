@@ -26,15 +26,17 @@ function Get-AzProviderResourceFromApiSpecs {
                         -ErrorAction 'SilentlyContinue'
                 ) -icontains 'put'
             ) {
-                $identifier = (
-                    $path `
-                    | Get-AzResourcePath `
-                        -Provider $Provider
-                ).Path
+                $identifier = $path `
+                | Get-AzResourcePath `
+                    -Provider $Provider
+
+                if ($Provider -ine $identifier.Provider) {
+                    return
+                }
 
                 if (
                     -not (
-                        $identifier `
+                        $identifier.Path `
                         | Split-AzResourcePath `
                             -Entity
                     )
@@ -43,7 +45,7 @@ function Get-AzProviderResourceFromApiSpecs {
                 }
 
                 @{
-                    Identifier = $identifier
+                    Identifier = $identifier.Path
                     Value = $_.Value
                 }
             }

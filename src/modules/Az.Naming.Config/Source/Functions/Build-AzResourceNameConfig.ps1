@@ -83,6 +83,11 @@ function Build-AzResourceNameConfig {
 
     $providerConfigObject = [ordered]@{}
     $lastProvider = $null
+    $providerStore = Register-BloomStore `
+        -Name 'provider' `
+        -Key 'key' `
+        -Force `
+        -PassThru
 
     if (-not (Test-Path $Destination)) {
         New-Item `
@@ -95,11 +100,12 @@ function Build-AzResourceNameConfig {
     $global:UsedRuleList = [System.Collections.Generic.List[string]]::new()
     $global:PoliciesCount = 0
     $global:PolicyFromApiSpecsCount = 0
-    $global:PolicyFromOfficialDocsCount = 0
+    $global:PolicyFromDocsCount = 0
     $global:ConstraintsFromApiSpecsCount = 0
     $global:CheckNameEndpointCount = 0
     $global:UnresolvedAbbreviationCount = 0
     $global:CheckNameEndpointList = [System.Collections.Generic.List[string]]::new()
+    $global:OutputFileCount = 0
 
     Invoke-AzApiSpecsItem `
         -Path $ApiSpecsPath `
@@ -107,8 +113,54 @@ function Build-AzResourceNameConfig {
             $item = $_
 
             if ($lastProvider -ne $item.Provider) {
+                $providerIndex = Build-BloomStoreIndex `
+                    -StoreName $providerStore.Name `
+                    -PassThru `
+                    -Keys
+
+                if ($providerIndex.Keys.Count) {
+                    $providerIndex.Keys `
+                    | Sort-Object `
+                    | Write-EachToJson `
+                        -Path "$Destination/$($lastProvider).json" `
+                        -Utf8JsonWriter `
+                        -Begin {
+                            $_.Writer.WriteStartObject()
+                        } `
+                        -Process {
+                            $key = $_.Item
+                            $bloomItem = Get-BloomItem `
+                                -StoreName $providerStore.Name `
+                                -Key $key
+                            $configObject = $providerConfigObject[$key]
+
+                            if ($configObject.policy) {
+                                Merge-Dictionary `
+                                    -InputObject $bloomItem.value `
+                                    -Source $configObject.policy `
+                                    -Path 'policy' `
+                                | Out-Null
+                            }
+
+                            Write-JsonItem `
+                                -Utf8JsonWriter $_.Writer `
+                                -Key $key `
+                                -Value $bloomItem.value
+                        } `
+                        -End {
+                            $_.Writer.WriteEndObject()
+                        }
+
+                    $global:OutputFileCount++
+                }
+
                 $lastProvider = $item.Provider
                 $providerConfigObject = [ordered]@{}
+                $providerStore = Register-BloomStore `
+                    -Name 'provider' `
+                    -Key 'key' `
+                    -Force `
+                    -PassThru
 
                 if ($null -ne $lastProvider) {
                     Write-Host $null
@@ -161,9 +213,18 @@ function Build-AzResourceNameConfig {
                         }                            
                     )
 
-                $providerConfigObject[$_.Identifier] = [ordered]@{
-                    policy = $policyObject
-                }
+                @{
+                    key = $_.Identifier
+                    value = [ordered]@{
+                        policy = $policyObject
+                    }
+                } `
+                | Set-BloomItem `
+                    -StoreName $providerStore.Name
+
+                # $providerConfigObject[$_.Identifier] = [ordered]@{
+                #     policy = $policyObject
+                # }
 
                 if ($policyObject.metadata.isTodo) {
                     $global:UnresolvedAbbreviationCount++
@@ -173,7 +234,7 @@ function Build-AzResourceNameConfig {
                     $global:PolicyFromApiSpecsCount++
                 }
                 elseif ($policyObject.metadata.source.type -eq "official docs") {
-                    $global:PolicyFromOfficialDocsCount++
+                    $global:PolicyFromDocsCount++
                 }
 
                 $global:PoliciesCount++
@@ -313,28 +374,30 @@ function Build-AzResourceNameConfig {
 
             # Write-Host ''
 
-            if ($providerConfigObject.Keys.Count) {
-                $providerConfigObject.Keys `
-                | Sort-Object `
-                | Write-EachToJson `
-                    -Path "$Destination/$($item.Provider).json" `
-                    -Utf8JsonWriter `
-                    -Begin {
-                        $_.Writer.WriteStartObject()
-                    } `
-                    -Process {
-                        $key = $_.Item
-                        $item = $providerConfigObject.$key
+            # if ($providerConfigObject.Keys.Count) {
+            #     $providerConfigObject.Keys `
+            #     | Sort-Object `
+            #     | Write-EachToJson `
+            #         -Path "$Destination/$($item.Provider).json" `
+            #         -Utf8JsonWriter `
+            #         -Begin {
+            #             $_.Writer.WriteStartObject()
+            #         } `
+            #         -Process {
+            #             $key = $_.Item
+            #             $item = $providerConfigObject.$key
 
-                        Write-JsonItem `
-                            -Utf8JsonWriter $_.Writer `
-                            -Key $key `
-                            -Value $item
-                    } `
-                    -End {
-                        $_.Writer.WriteEndObject()
-                    }
-            }
+            #             Write-JsonItem `
+            #                 -Utf8JsonWriter $_.Writer `
+            #                 -Key $key `
+            #                 -Value $item
+            #         } `
+            #         -End {
+            #             $_.Writer.WriteEndObject()
+            #         }
+
+            #     $global:OutputFileCount++
+            # }
         }
 
     $endpointIndex = Build-BloomStoreIndex `
@@ -358,8 +421,8 @@ function Build-AzResourceNameConfig {
         $unusedRuleList.Add($ruleKey)
     }
 
-    Write-Host $null
-    Write-Host $null
+    Write-Host
+    Write-Host
 
     Write-Host "Unused Rules List:"
     $unusedRuleList `
@@ -368,7 +431,7 @@ function Build-AzResourceNameConfig {
         Write-Host "  $_"
     }
 
-    Write-Host $null
+    Write-Host
 
     Write-Host "Unresolved CheckName Endpoints List:"
     $global:CheckNameEndpointList `
@@ -377,30 +440,27 @@ function Build-AzResourceNameConfig {
         Write-Host "  $_"
     }
 
-    Write-Host $null
+    Write-Host
 
     Write-Host "Rules count:"
     Write-Host "  Total: $($ruleIndex.KeyCount)"
     Write-Host "  Used: $($global:UsedRuleList.Count)"
+    Write-Host "  Unused: $($unusedRuleList.Count)"
     Write-Host "Policies count:"
     Write-Host "  Total: $($global:PoliciesCount)"
-    Write-Host "  From official docs: $($global:PolicyFromOfficialDocsCount)"
-    Write-Host "  From official API specs: $($global:PolicyFromApiSpecsCount)"
+    Write-Host "  From docs: $($global:PolicyFromDocsCount)"
+    Write-Host "  From API specs: $($global:PolicyFromApiSpecsCount)"
     Write-Host "Abbreviations count:"
     Write-Host "  Total: $(${Az.Naming.Config}.ResourceAbbreviation.Keys.Count)"
     Write-Host "  Unresolved: $($global:UnresolvedAbbreviationCount)"
     Write-Host "Constraints count:"
+    Write-Host "  From docs: $($global:PolicyFromDocsCount)"
     Write-Host "  From API specs: $($global:ConstraintsFromApiSpecsCount)"
     Write-Host "Endpoints count:"
     Write-Host "  Total: $($endpointIndex.KeyCount)"
     Write-Host "  CheckName: $($global:CheckNameEndpointCount)"
 
-    # Write-Host "Total Policies count: $($global:PoliciesCount)"
-    # Write-Host "Policies from official docs count: $($global:PolicyFromOfficialDocsCount)"
-    # Write-Host "Policies from official API specs count: $($global:PolicyFromApiSpecsCount)"
-    # Write-Host "Abbreviations count: $(${Az.Naming.Config}.ResourceAbbreviation.Keys.Count)"
-    # Write-Host "Unresolved Abbreviations count: $($global:UnresolvedAbbreviationCount)"
-    # Write-Host "Constraints from API Specs count: $($global:ConstraintsFromApiSpecsCount)"
-    # Write-Host "Checkname endpoints count: $($global:CheckNameEndpointCount)"
-    # Write-Host "Total Endpoint Count: $($endpointIndex.KeyCount)"
+    Write-Host
+
+    Write-Host "Output Files Count: $($global:OutputFileCount)"
 }
