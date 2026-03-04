@@ -1,14 +1,14 @@
 # Load the Convert-ConstraintToRegex module
-$functionPath = 'c:\Users\admin\Source\Repos\aznaming.config\src\modules\Az.Naming.Config\Source\Functions\Convert-ConstraintToRegex.ps1'
+$functionPath = "$PSScriptRoot\..\modules\Az.Naming.Config\Source\Functions\Convert-ConstraintToRegex.ps1"
 . $functionPath
 
 # Read the validChars.txt file
-$validCharsPath = 'c:\Users\admin\Source\Repos\aznaming.config\config\validChars.txt'
+$validCharsPath = "$PSScriptRoot\..\..\docs\validChars.txt"
 $validCharsLines = @(Get-Content -Path $validCharsPath -Encoding UTF8)
 
 # Output file paths
-$outputPath = 'c:\Users\admin\Source\Repos\aznaming.config\config\validChars-regex.json'
-$reportPath = 'c:\Users\admin\Source\Repos\aznaming.config\config\validChars-regex-report.txt'
+$outputPath = "$PSScriptRoot\..\..\docs\validChars-regex.json"
+$reportPath = "$PSScriptRoot\..\..\docs\validChars-regex-report.txt"
 
 # Process each line
 $results = @()

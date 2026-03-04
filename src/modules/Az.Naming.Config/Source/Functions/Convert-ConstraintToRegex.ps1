@@ -101,14 +101,17 @@ function Split-ConstraintBlocks {
             -replace '&gt;', '>' `
             -replace '&#x?[0-9a-fA-F]+;', ''
 
-        # Strip any remaining HTML tags (e.g. <code>, <a href>, etc.)
-        $block = $block -replace '<[^>]+>', ''
+        # Strip any remaining HTML tags BUT preserve angle brackets that are not part of tags
+        # Only strip actual tags like <br>, <tag>, </tag>, etc. - not bare < > or < >
+        $block = $block -replace '</?\w+[^>]*>', ''
 
         # Strip markdown bold: **text** → text
         $block = $block -replace '\*\*([^*]+)\*\*', '$1'
 
-        # Strip markdown inline code: `text` → text
-        $block = $block -replace '`([^`]*)`', '$1'
+        # NOTE: Do NOT strip backtick-delimited content - it may contain forbidden characters
+        # (e.g., in "Can't use spaces, control characters, or these characters: `~ ! @ # $ % ^ & * ( ) = + _ [ ] { } \ | ; : . ' " , < > / ?`")
+        # The backticks will be processed by the rules that match these descriptions
+        # $block = $block -replace '`([^`]*)`', '$1'
 
         # Strip markdown links: [text](url) → text
         $block = $block -replace '\[([^\]]+)\]\([^)]+\)', '$1'
@@ -902,6 +905,53 @@ function New-ConstraintRuleRegistry {
         },
 
         [ordered]@{
+            Name    = 'Cant_UseSpacesControlChars'
+            Pattern = "(?i)can'?t\s+use\s+spaces,?\s*control\s+characters,?\s*(or\s+)?these\s+characters"
+            Action  = {
+                param($m, $state, $block)
+                $text = if ($block) { $block } else { $m.Value }
+
+                # Extract chars after "these characters:"
+                $charsPart = ''
+                if ($text -match '(?i)these\s+characters:\s*`?([^`]+)`?') {
+                    $charsPart = $matches[1].Trim()
+                }
+
+                # Chars are space-separated, so split on spaces and process each token
+                $charTokens = $charsPart -split '\s+' | Where-Object { $_.Length -gt 0 }
+
+                # Build escaped character set by processing each space-separated token/character
+                $excludedChars = ''
+                $processedChars = @()
+
+                foreach ($token in $charTokens) {
+                    # Each token should be a single character (possibly needing escaping in regex)
+                    # Examples: ~, !, @, etc.
+                    $processedChars += $token
+                }
+
+                # Get unique characters and escape them properly for negative character class
+                $uniqueChars = ($processedChars | Select-Object -Unique)
+
+                foreach ($c in $uniqueChars) {
+                    switch ($c) {
+                        ']'  { $excludedChars += '\]' }
+                        '\' { $excludedChars += '\\' }
+                        '^'  { $excludedChars += '\^' }
+                        '-'  { $excludedChars += '\-' }
+                        default { $excludedChars += [regex]::Escape($c) }
+                    }
+                }
+
+                # Add space and control characters to excluded set
+                $excludedChars += '\s\x00-\x1F'
+
+                $state.IsExclusion = $true
+                $state.ExcludedChars = $excludedChars
+            }
+        },
+
+        [ordered]@{
             Name    = 'Cant_UseExcluded'
             Pattern = "(?i)can'?t\s+use:\s*"
             Action  = {
@@ -925,11 +975,21 @@ function New-ConstraintRuleRegistry {
                 }
 
                 # Get the excluded characters string
+                # Try to parse as space-separated tokens first (for backtick-delimited lists)
                 $chars = $remainder.Trim()
-
-                # Build escaped character set for use in [^...] class
+                
+                # Split on spaces and collect tokens
+                $charTokens = @($chars -split '\s+' | Where-Object { $_.Length -gt 0 })
+                
+                # If we got multiple tokens, treat as space-separated; otherwise use char array
                 $excludedChars = ''
-                $uniqueChars = ($chars.ToCharArray() | Select-Object -Unique)
+                if ($charTokens.Count -gt 1) {
+                    # Space-separated character list
+                    $uniqueChars = ($charTokens | Select-Object -Unique)
+                } else {
+                    # Dense character string or single token - process as char array
+                    $uniqueChars = ($chars.ToCharArray() | Select-Object -Unique)
+                }
 
                 foreach ($c in $uniqueChars) {
                     switch ($c) {
@@ -937,54 +997,16 @@ function New-ConstraintRuleRegistry {
                         '\' { $excludedChars += '\\' }
                         '^'  { $excludedChars += '\^' }
                         '-'  { $excludedChars += '\-' }
-                        default { $excludedChars += $c }
+                        default { $excludedChars += [regex]::Escape($c) }
                     }
                 }
-
+                
                 if ($hasControlChars) {
                     $excludedChars += '\x00-\x1F'
                 }
                 if ($hasSpace) {
                     $excludedChars += '\s'
                 }
-
-                $state.IsExclusion = $true
-                $state.ExcludedChars = $excludedChars
-            }
-        },
-
-        [ordered]@{
-            Name    = 'Cant_UseSpacesControlChars'
-            Pattern = "(?i)can'?t\s+use\s+spaces,?\s*control\s+characters,?\s*(or\s+)?these\s+characters"
-            Action  = {
-                param($m, $state, $block)
-                $text = if ($block) { $block } else { $m.Value }
-
-                # Extract chars after "these characters:"
-                $charsPart = ''
-                if ($text -match '(?i)these\s+characters:\s*(.+)$') {
-                    $charsPart = $matches[1].Trim()
-                }
-
-                # Chars are space-separated, get unique non-space chars
-                $chars = $charsPart -replace '\s+', ''
-
-                # Build escaped character set
-                $excludedChars = ''
-                $uniqueChars = ($chars.ToCharArray() | Select-Object -Unique)
-
-                foreach ($c in $uniqueChars) {
-                    switch ($c) {
-                        ']'  { $excludedChars += '\]' }
-                        '\' { $excludedChars += '\\' }
-                        '^'  { $excludedChars += '\^' }
-                        '-'  { $excludedChars += '\-' }
-                        default { $excludedChars += $c }
-                    }
-                }
-
-                # Add space and control characters to excluded set
-                $excludedChars += '\s\x00-\x1F'
 
                 $state.IsExclusion = $true
                 $state.ExcludedChars = $excludedChars
@@ -1006,9 +1028,18 @@ function New-ConstraintRuleRegistry {
                     $charsPart = $remainder -replace '(?i)\s+or\s+control\s+characters?.*$', ''
                     $chars = $charsPart.Trim()
 
-                    # Build escaped character set for [^...] class
+                    # Check if characters appear to be space-separated - split and check token count
+                    $charTokens = @($chars -split '\s+' | Where-Object { $_.Length -gt 0 })
                     $excludedChars = ''
-                    $uniqueChars = ($chars.ToCharArray() | Select-Object -Unique)
+                    
+                    if ($charTokens.Count -gt 1) {
+                        # Space-separated character list
+                        $uniqueChars = ($charTokens | Select-Object -Unique)
+                    }
+                    else {
+                        # Dense character string
+                        $uniqueChars = ($chars.ToCharArray() | Select-Object -Unique)
+                    }
 
                     foreach ($c in $uniqueChars) {
                         switch ($c) {
@@ -1016,7 +1047,7 @@ function New-ConstraintRuleRegistry {
                             '\' { $excludedChars += '\\' }
                             '^'  { $excludedChars += '\^' }
                             '-'  { $excludedChars += '\-' }
-                            default { $excludedChars += $c }
+                            default { $excludedChars += [regex]::Escape($c) }
                         }
                     }
 
@@ -1147,12 +1178,41 @@ function New-ConstraintRuleRegistry {
         },
 
         #----------------------------------------------------------------------
+        # OS-specific constraints (Windows/Linux VMs) — must be before Note rule
+        #----------------------------------------------------------------------
+
+        [ordered]@{
+            Name    = 'Special_OSVirtualMachineConstraints'
+            Pattern = '(?i)(windows|linux)\s+virtual\s+machines?\s+can''?t\s+(.+?)(?:\.|$)'
+            Action  = {
+                param($m, $state)
+                # Extract constraints from "can't ..." part
+                $constraints = $m.Groups[2].Value
+                
+                # Parse end-with constraints
+                if ($constraints -match "end\s+with\s+(.+?)(?:\.|$)") {
+                    $endItems = $matches[1]
+                    # Split on "or" and extract individual items
+                    $items = $endItems -split '\s+or\s+' | ForEach-Object { $_.Trim() }
+                    foreach ($item in $items) {
+                        if ($item -match 'periods?|\.') {
+                            $state.CantEndWith.Add('\.')
+                        }
+                        if ($item -match 'hyphens?|\\-|-') {
+                            $state.CantEndWith.Add('\-')
+                        }
+                    }
+                }
+            }
+        },
+
+        #----------------------------------------------------------------------
         # Note / Informational — skip these blocks
         #----------------------------------------------------------------------
 
         [ordered]@{
             Name    = 'Note'
-            Pattern = '(?i)^note:|^for more information|^the solution type|only predefined values|^to use restricted|^for solutions authored|^windows virtual|^linux virtual|^resource name can|^for example|^valid characters are|^each label is|^can''t contain reserved'
+            Pattern = '(?i)^note:|^for more information|^the solution type|only predefined values|^to use restricted|^for solutions authored|^resource name can|^for example|^valid characters are|^each label is|^can''t contain reserved'
             Action  = {
                 param($m, $state, $block)
                 $text = if ($block) { $block } else { $m.Value }
@@ -1271,14 +1331,17 @@ function Convert-ConstraintToRegex {
         #------------------------------------------------------------------
         foreach ($block in $blocks) {
             # Split each block into sentences using ". " or "; " as delimiters.
-            # This ensures that compound blocks like
-            #   "Start and end with alphanumeric; can't be all numbers."
-            # have each clause matched independently.
-            # The lookbehind requires a word char before the period to avoid
-            # splitting "Can't end with . or space" mid-sentence.
-            $sentences = $block -split '(?<=\w\.)\s+|;\s+' `
-                | ForEach-Object { $_.TrimEnd('.').Trim() } `
-                | Where-Object { $_.Length -gt 0 }
+            #  If the block contains backtick sections with forbidden characters,
+            # don't split on ; or . since they may be inside the backticks
+            if ($block -match '`[^`]*[;.]') {
+                # Block contains ; or . inside backticks - treat as singular sentence
+                $sentences = @($block.Trim())
+            } else {
+                # Safe to split on ; and .
+                $sentences = $block -split '(?<=\w\.)\s+|;\s+' `
+                    | ForEach-Object { $_.TrimEnd('.').Trim() } `
+                    | Where-Object { $_.Length -gt 0 }
+            }
 
             foreach ($sentence in $sentences) {
                 foreach ($rule in $rules) {
